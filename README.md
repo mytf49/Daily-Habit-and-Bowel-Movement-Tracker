@@ -27,18 +27,6 @@ Since this project is contained within a single `index.html` file, running or ho
 
 ---
 
-## 📋 Update Log & Changelog
-
-### **Build 1.0b2_20261118 (Latest)**
-* Added full-width responsive large-screen support (`max-w-full` layout).
-* Reorganized dashboard into a clean multi-column grid on desktop views and placed trend charts side-by-side.
-* Updated chart rendering logic to ensure cleared/deleted dates do not plot lingering zero-value data points.
-* Moved the build badge to a discrete bottom-right footer label.
-
-### **Build 1.0b1_20261118 (Initial Release)**
-
----
-
 ## 🔒 Privacy Notice
 
 Your data privacy is 100% protected. **Daily Habit and Bowel Movement Tracker** does not use cookies, analytics, or third-party databases. All logs are stored strictly inside your browser's local storage environment (`localStorage`), meaning your health data never leaves your device unless you manually export a JSON backup.
