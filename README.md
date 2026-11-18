@@ -4,6 +4,8 @@ A lightweight, fully private, client-side health and habit dashboard designed to
 
 Built as a single, self-contained file using **HTML**, **Tailwind CSS**, and **Chart.js**, with zero backend or external servers required—all records stay entirely secure and private in your browser's `localStorage`.
 
+> **🤖 Note:** This project was co-created and built with the assistance of AI (Gemini) as a personal project.
+
 ---
 
 ## 🌟 Features
