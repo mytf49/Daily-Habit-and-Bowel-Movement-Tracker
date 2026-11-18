@@ -36,12 +36,6 @@ Since this project is contained within a single `index.html` file, running or ho
 * Moved the build badge to a discrete bottom-right footer label.
 
 ### **Build 1.0b1_20261118 (Initial Release)**
-* Initial release of the single-file habit and bowel movement tracker.
-* Implemented daily habit logging (steps, fluid intake calculator, daily remarks).
-* Implemented multi-entry bowel movement logging (Bristol hardness scale, pain scale, bleeding severity).
-* Added Chart.js visual analytics with customizable date range filters (7 days, 14 days, 30 days, all time).
-* Added Dark Mode support with state persistence.
-* Added JSON backup export and drag-and-drop import data management.
 
 ---
 
