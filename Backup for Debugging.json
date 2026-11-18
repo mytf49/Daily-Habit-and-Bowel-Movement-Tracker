@@ -1,0 +1,64 @@
+{
+  "2026-11-18": {
+    "steps": "15000",
+    "fluidMl": "1500",
+    "poops": [
+      {
+        "time": "18:57",
+        "bristol": "4",
+        "pain": "1",
+        "bleeding": "1",
+        "remark": ""
+      },
+      {
+        "time": "21:04",
+        "bristol": "2",
+        "pain": "2",
+        "bleeding": "1",
+        "remark": ""
+      },
+      {
+        "time": "21:15",
+        "bristol": "4",
+        "pain": "2",
+        "bleeding": "0",
+        "remark": ""
+      }
+    ],
+    "remarks": ""
+  },
+  "2026-11-17": {
+    "steps": "7358",
+    "fluidMl": "1800",
+    "remarks": "",
+    "poops": [
+      {
+        "time": "21:10",
+        "bristol": "2",
+        "pain": "3",
+        "bleeding": "1",
+        "remark": ""
+      }
+    ]
+  },
+  "2026-11-16": {
+    "steps": "5000",
+    "fluidMl": "2750",
+    "remarks": "",
+    "poops": [
+      {
+        "time": "21:11",
+        "bristol": "2",
+        "pain": "1",
+        "bleeding": "0",
+        "remark": ""
+      }
+    ]
+  },
+  "2026-10-01": {
+    "steps": "6000",
+    "fluidMl": "2750",
+    "remarks": "",
+    "poops": []
+  }
+}
