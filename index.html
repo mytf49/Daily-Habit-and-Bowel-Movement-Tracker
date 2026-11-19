@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="en" id="html-root">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Habit and Bowel Movement Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <style>
+        /* Hide spinner arrows globally for a clean look */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+        /* Enable smooth calendar picker popup on click across browsers */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen px-4 sm:px-8 lg:px-16 py-4 w-full pb-16 transition-colors duration-200 relative flex flex-col justify-between">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none max-w-xs w-full"></div>
+
+    <div>
+        <header class="mb-5 flex justify-between items-center overflow-x-auto pb-2">
+            <div>
+                <h1 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white whitespace-nowrap">Daily Habit and Bowel Movement Tracker</h1>
+            </div>
+            <!-- Dark Mode Toggle -->
+            <button type="button" onclick="toggleDarkMode()" class="p-2 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-medium hover:bg-slate-300 dark:hover:bg-slate-700 transition ml-4 shrink-0">
+                <span id="dark-mode-icon">🌙 Dark</span>
+            </button>
+        </header>
+
+        <main class="space-y-6">
+            <!-- At-a-Glance Summary Strip -->
+            <section aria-label="Daily Summary" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="bg-white dark:bg-slate-800 px-4 py-3 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between transition-colors">
+                    <div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">💧 Fluid (<span id="summary-date-water">--</span>)</p>
+                        <p id="summary-water-val" class="text-base font-semibold text-slate-800 dark:text-slate-100 mt-0.5">0 / 2,000 mL</p>
+                    </div>
+                    <span id="summary-water-badge" class="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium">0%</span>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 px-4 py-3 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between transition-colors">
+                    <div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">🚶‍♂️ Steps (<span id="summary-date-steps">--</span>)</p>
+                        <p id="summary-steps-val" class="text-base font-semibold text-slate-800 dark:text-slate-100 mt-0.5">0 / 10,000</p>
+                    </div>
+                    <span id="summary-steps-badge" class="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium">0%</span>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 px-4 py-3 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between transition-colors">
+                    <div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">💩 7-Day Avg Bristol</p>
+                        <p id="summary-bristol-val" class="text-base font-semibold text-slate-800 dark:text-slate-100 mt-0.5">--</p>
+                    </div>
+                    <span id="summary-bristol-badge" class="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium">No logs</span>
+                </div>
+            </section>
+
+            <!-- Trend Analysis Section: 2 Charts Side-by-Side on Desktop with Date Range Selector -->
+            <section class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 space-y-5 transition-colors">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                    <h2 class="font-semibold text-lg text-slate-700 dark:text-slate-200">📊 Trend Analysis</h2>
+                    <div class="flex items-center gap-1.5">
+                        <label for="chart-range" class="text-xs text-slate-500 dark:text-slate-400">View Range:</label>
+                        <select id="chart-range" onchange="renderCharts()" class="p-1 border dark:border-slate-600 rounded-lg text-xs bg-slate-50 dark:bg-slate-900 font-medium text-slate-700 dark:text-slate-200">
+                            <option value="7" selected>Last 7 Days</option>
+                            <option value="14">Last 14 Days</option>
+                            <option value="30">Last 30 Days</option>
+                            <option value="all">All Time</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Side-by-Side Graph Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Chart 1: Habits (Steps & Fluid) -->
+                    <div class="space-y-1.5">
+                        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">🚶‍♂️ Steps vs. 💧 Water Intake (mL) <span class="text-[10px] text-blue-500">(Dashed lines = Targets: 2000mL / 10k Steps)</span></p>
+                        <div class="w-full h-64 sm:h-80 relative">
+                            <canvas id="habitsChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Chart 2: Symptoms (Hardness & Pain, red date if bleeding) -->
+                    <div class="space-y-1.5">
+                        <p class="text-xs font-medium text-slate-500 dark:text-slate-400">💩 Bristol Hardness & Pain (Red date = Bleeding)</p>
+                        <div class="w-full h-64 sm:h-80 relative">
+                            <canvas id="symptomsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Forms & History Layout Container: Multi-column dashboard grid on desktop -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Left Column: Daily Habits Form -->
+                <section class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 space-y-4 transition-colors">
+                    <div class="flex justify-between items-end gap-2">
+                        <h2 class="font-semibold text-lg text-slate-700 dark:text-slate-200">🌿 Daily Habits</h2>
+                        <div class="flex items-end gap-1.5">
+                            <div>
+                                <label for="target-date" class="block text-xs text-slate-500 dark:text-slate-400 mb-0.5">Date</label>
+                                <input type="date" id="target-date" onclick="this.showPicker && this.showPicker()" onchange="onDateSelectorChange()" class="p-1.5 border dark:border-slate-600 rounded-lg text-xs bg-slate-50 dark:bg-slate-900 font-medium text-slate-700 dark:text-slate-200 cursor-pointer">
+                            </div>
+                            <button type="button" onclick="jumpToToday()" class="p-1.5 px-2.5 border dark:border-slate-600 rounded-lg text-xs bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-medium transition" title="Jump to today's date">Today</button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-700">
+                        <div>
+                            <label for="daily-steps" class="block text-xs text-slate-500 dark:text-slate-400 mb-1">🚶‍♂️ Total Steps</label>
+                            <input type="number" id="daily-steps" min="0" step="1" placeholder="e.g., 7500" oninput="sanitizeNonNegativeInput(this); updateSummaryCards();" class="w-full p-2 border dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">
+                        </div>
+
+                        <!-- Fluid Intake: Unified box for bottle calculator & exact mL -->
+                        <div class="space-y-2">
+                            <label class="block text-xs text-slate-500 dark:text-slate-400">💧 Water / Fluid Intake</label>
+                            
+                            <div class="bg-slate-50 dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2.5">
+                                <div class="flex gap-2 items-center">
+                                    <div class="flex-1">
+                                        <label for="bottle-size" class="block text-xs text-slate-500 dark:text-slate-400 mb-1">Bottle Size (mL)</label>
+                                        <input type="number" id="bottle-size" min="0" value="500" oninput="sanitizeNonNegativeInput(this); calculateTotalFluid();" class="w-full p-1.5 border dark:border-slate-600 rounded text-xs bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">
+                                    </div>
+                                    <div class="flex-1">
+                                        <label for="bottle-count" class="block text-xs text-slate-500 dark:text-slate-400 mb-1">Bottles (±0.5)</label>
+                                        <div class="flex items-center border dark:border-slate-600 rounded bg-white dark:bg-slate-800 overflow-hidden">
+                                            <button type="button" onclick="adjustBottles(-0.5)" class="px-2 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold transition">−</button>
+                                            <input type="number" id="bottle-count" value="0" min="0" step="0.5" oninput="sanitizeNonNegativeInput(this); calculateTotalFluid();" class="w-full p-1 text-center text-xs bg-transparent text-slate-800 dark:text-slate-100 font-medium">
+                                            <button type="button" onclick="adjustBottles(0.5)" class="px-2 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold transition">+</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label for="exact-fluid" class="block text-xs text-slate-500 dark:text-slate-400 mb-1">Or Enter Exact Total Fluid (mL)</label>
+                                    <input type="number" id="exact-fluid" min="0" placeholder="e.g., 2000" oninput="sanitizeNonNegativeInput(this); syncBottlesFromExactFluid(); updateSummaryCards();" class="w-full p-2 border dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="daily-remarks" class="block text-xs text-slate-500 dark:text-slate-400 mb-1">📝 Daily Remarks / Notes</label>
+                            <input type="text" id="daily-remarks" placeholder="e.g., Ate extra fiber today, felt mild strain" class="w-full p-2 border dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">
+                        </div>
+
+                        <div class="space-y-2 pt-1">
+                            <button type="button" onclick="saveHabits()" class="w-full bg-blue-600 text-white font-medium py-2.5 rounded-xl text-sm hover:bg-blue-700 transition">Save Habits</button>
+                            <button type="button" onclick="clearHabits()" class="w-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 py-2.5 rounded-xl text-xs font-medium hover:bg-slate-300 dark:hover:bg-slate-600 transition">Clear Habits</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Middle Column: Bowel Movement Form -->
+                <form id="poop-form" class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 space-y-4 transition-colors">
+                    <div class="flex justify-between items-start gap-2">
+                        <div>
+                            <h2 id="poop-form-title" class="font-semibold text-lg text-slate-700 dark:text-slate-200">💩 Bowel Movement</h2>
+                            <p id="poop-form-subtitle" class="text-xs text-slate-400">Multiple entries allowed.</p>
+                        </div>
+                        <div class="flex gap-1.5">
+                            <div>
+                                <label for="poop-date" class="block text-xs text-slate-500 dark:text-slate-400 mb-0.5">Date</label>
+                                <input type="date" id="poop-date" onclick="this.showPicker && this.showPicker()" class="p-1.5 border dark:border-slate-600 rounded-lg text-xs bg-slate-50 dark:bg-slate-900 font-medium text-slate-700 dark:text-slate-200 cursor-pointer">
+                            </div>
+                            <div>
+                                <label for="poop-time" class="block text-xs text-slate-500 dark:text-slate-400 mb-0.5">Time</label>
+                                <input type="time" id="poop-time" class="p-1.5 border dark:border-slate-600 rounded-lg text-xs bg-slate-50 dark:bg-slate-900 font-medium text-slate-700 dark:text-slate-200">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-700">
+                        <div>
+                            <label for="bristol" class="block text-xs text-slate-500 dark:text-slate-400 mb-1">Bristol Hardness (1 - 7)</label>
+                            <select id="bristol" class="w-full p-2 border dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">
+                                <option value="1">Type 1 - Separate hard lumps (Constipated)</option>
+                                <option value="2">Type 2 - Lumpy and sausage-like</option>
+                                <option value="3">Type 3 - Sausage with cracks</option>
+                                <option value="4" selected>Type 4 - Smooth, soft sausage (Ideal)</option>
+                                <option value="5">Type 5 - Soft blobs with clear edges</option>
+                                <option value="6">Type 6 - Fluffy pieces, mushy</option>
+                                <option value="7">Type 7 - Watery, no solid pieces</option>
+                            </select>
+                        </div>
+
+                        <!-- Pain Slider -->
+                        <div class="space-y-1">
+                            <div class="flex justify-between items-center">
+                                <label for="pain-slider" class="block text-xs text-slate-500 dark:text-slate-400">Pain Scale</label>
+                                <span id="pain-val-display" class="text-xs font-bold px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400">0 - None</span>
+                            </div>
+                            <input type="range" id="pain-slider" min="0" max="5" step="1" value="0" oninput="updatePainDisplay(this.value)" class="block w-full m-0 p-0 accent-blue-600 cursor-pointer">
+                            <div class="flex justify-between text-[10px] text-slate-400">
+                                <span class="w-4 text-center">0</span>
+                                <span class="w-4 text-center">1</span>
+                                <span class="w-4 text-center">2</span>
+                                <span class="w-4 text-center">3</span>
+                                <span class="w-4 text-center">4</span>
+                                <span class="w-4 text-center">5</span>
+                            </div>
+                            <div class="flex justify-between text-[9px] text-slate-400">
+                                <span>None</span>
+                                <span>Severe</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="bleeding" class="block text-xs text-slate-500 dark:text-slate-400 mb-1">Bleeding (0 = None, 1 = Minor, 2 = Drips, 3 = Heavy)</label>
+                            <select id="bleeding" class="w-full p-2 border dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">
+                                <option value="0">0 - None</option>
+                                <option value="1">1 - Minor (on toilet paper)</option>
+                                <option value="2">2 - Moderate (visible in bowl/drips)</option>
+                                <option value="3">3 - Significant</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="poop-remark" class="block text-xs text-slate-500 dark:text-slate-400 mb-1">📝 Entry Remarks (Optional)</label>
+                            <input type="text" id="poop-remark" placeholder="e.g., Felt sharp pain during passing" class="w-full p-2 border dark:border-slate-600 rounded-lg text-sm bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">
+                        </div>
+
+                        <div class="space-y-2 pt-1">
+                            <button id="poop-submit-btn" type="submit" class="w-full bg-blue-600 text-white font-medium py-2.5 rounded-xl text-sm hover:bg-blue-700 transition">Save Bowel Movement</button>
+                            <button id="poop-cancel-edit-btn" type="button" onclick="cancelEditPoop()" class="hidden w-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 py-2 rounded-xl text-xs font-medium hover:bg-slate-300 dark:hover:bg-slate-600 transition">Cancel Editing</button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Right Column: History & Data Management -->
+                <section class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 space-y-4 transition-colors lg:col-span-1">
+                    <div class="flex justify-between items-center">
+                        <h2 class="font-semibold text-lg text-slate-700 dark:text-slate-200">🕒 History & Data</h2>
+                        <button type="button" onclick="openDataModal()" class="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg font-medium hover:bg-blue-700 transition flex items-center gap-1">
+                            📂 Data Management
+                        </button>
+                    </div>
+
+                    <!-- Search & Filter Controls -->
+                    <div class="space-y-2 bg-slate-50/70 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700/80">
+                        <div>
+                            <label for="search-query" class="block text-xs text-slate-500 dark:text-slate-400 mb-1">Search Notes / Remarks</label>
+                            <input type="text" id="search-query" oninput="renderHistoryList()" placeholder="e.g., fiber, type 1, bleed..." class="w-full p-1.5 border dark:border-slate-600 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200">
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div>
+                                <label for="filter-date" class="block text-xs text-slate-500 dark:text-slate-400 mb-1">Specific Date</label>
+                                <input type="date" id="filter-date" onclick="this.showPicker && this.showPicker()" onchange="renderHistoryList()" class="w-full p-1.5 border dark:border-slate-600 rounded-lg text-xs bg-white dark:bg-slate-900 font-medium text-slate-700 dark:text-slate-200 cursor-pointer">
+                            </div>
+
+                            <div>
+                                <label for="filter-bristol" class="block text-xs text-slate-500 dark:text-slate-400 mb-1">Stool Type</label>
+                                <select id="filter-bristol" onchange="renderHistoryList()" class="w-full p-1.5 border dark:border-slate-600 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200">
+                                    <option value="">Any Type</option>
+                                    <option value="1">Type 1</option>
+                                    <option value="2">Type 2</option>
+                                    <option value="3">Type 3</option>
+                                    <option value="4">Type 4</option>
+                                    <option value="5">Type 5</option>
+                                    <option value="6">Type 6</option>
+                                    <option value="7">Type 7</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 items-end">
+                            <div>
+                                <label for="filter-min-pain" class="block text-xs text-slate-500 dark:text-slate-400 mb-1">Min Pain (0-5)</label>
+                                <select id="filter-min-pain" onchange="renderHistoryList()" class="w-full p-1.5 border dark:border-slate-600 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200">
+                                    <option value="">Any Pain</option>
+                                    <option value="1">1+ (Mild+)</option>
+                                    <option value="2">2+ (Moderate+)</option>
+                                    <option value="3">3+ (Uncomfortable+)</option>
+                                    <option value="4">4+ (Painful+)</option>
+                                    <option value="5">5 (Severe)</option>
+                                </select>
+                            </div>
+
+                            <label class="flex items-center gap-1.5 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-600 dark:text-slate-300 cursor-pointer select-none">
+                                <input type="checkbox" id="filter-bleeding" onchange="renderHistoryList()" class="rounded accent-rose-600 cursor-pointer">
+                                <span>🩸 Bleeding</span>
+                            </label>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs text-slate-500 dark:text-slate-400 mb-1">Fluid Intake Range (mL)</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="number" id="filter-fluid-min" min="0" placeholder="Min mL" oninput="sanitizeNonNegativeInput(this); renderHistoryList();" class="w-full p-1.5 border dark:border-slate-600 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200">
+                                <input type="number" id="filter-fluid-max" min="0" placeholder="Max mL" oninput="sanitizeNonNegativeInput(this); renderHistoryList();" class="w-full p-1.5 border dark:border-slate-600 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs text-slate-500 dark:text-slate-400 mb-1">Steps Range</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="number" id="filter-steps-min" min="0" placeholder="Min steps" oninput="sanitizeNonNegativeInput(this); renderHistoryList();" class="w-full p-1.5 border dark:border-slate-600 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200">
+                                <input type="number" id="filter-steps-max" min="0" placeholder="Max steps" oninput="sanitizeNonNegativeInput(this); renderHistoryList();" class="w-full p-1.5 border dark:border-slate-600 rounded-lg text-xs bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200">
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end pt-0.5">
+                            <button type="button" onclick="clearHistoryFilter()" class="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2.5 py-1 rounded-lg text-xs hover:bg-slate-300 dark:hover:bg-slate-600 transition">Clear All Filters</button>
+                        </div>
+                    </div>
+
+                    <div id="log-container" class="space-y-3 text-sm pt-1 max-h-[420px] overflow-y-auto pr-1">
+                        <!-- Dynamically grouped by date -->
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Footer Badge -->
+    <footer class="w-full flex justify-end mt-8 pointer-events-none">
+        <span class="text-[10px] font-mono text-slate-400/80 dark:text-slate-500/80 bg-slate-100/80 dark:bg-slate-900/80 px-1.5 py-0.5 rounded">Build 1.0b3_20261119</span>
+    </footer>
+
+    <!-- Data Management Popout Modal -->
+    <div id="data-modal" onclick="handleBackdropClick(event, 'data-modal')" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 p-6 space-y-5">
+            <div class="flex justify-between items-center border-b dark:border-slate-700 pb-3">
+                <h3 class="font-semibold text-base text-slate-800 dark:text-slate-100">📂 Data Management</h3>
+                <button type="button" onclick="closeDataModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm font-bold">✕</button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Left Side: Import (Drag & Drop + Browse) -->
+                <div class="space-y-2 flex flex-col">
+                    <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">📥 Import JSON</span>
+                    <label id="drop-zone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)" class="flex-1 border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-blue-500 dark:hover:border-blue-500 rounded-xl p-4 text-center cursor-pointer flex flex-col items-center justify-center gap-1.5 transition bg-slate-50 dark:bg-slate-900/50">
+                        <span class="text-xl">📄</span>
+                        <span class="text-xs text-slate-600 dark:text-slate-400 font-medium">Drag JSON here or click to browse</span>
+                        <input type="file" id="import-file" accept=".json" onchange="importData(event)" class="hidden">
+                    </label>
+                </div>
+
+                <!-- Right Side: Export -->
+                <div class="space-y-2 flex flex-col">
+                    <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">📤 Export JSON</span>
+                    <div class="flex-1 border border-slate-200 dark:border-slate-700 rounded-xl p-4 flex flex-col items-center justify-center gap-2 bg-slate-50 dark:bg-slate-900/50">
+                        <span class="text-xl">💾</span>
+                        <span class="text-[11px] text-slate-500 dark:text-slate-400 text-center">Save backup copy of all your records</span>
+                        <button type="button" onclick="exportJSON()" class="w-full bg-slate-800 dark:bg-slate-700 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-slate-900 dark:hover:bg-slate-600 transition">Export JSON</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-2 flex justify-end">
+                <button type="button" onclick="closeDataModal()" class="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 px-4 py-2 rounded-xl text-xs font-medium hover:bg-slate-300 dark:hover:bg-slate-600 transition">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal for Destructive Actions -->
+    <div id="confirm-modal" onclick="handleBackdropClick(event, 'confirm-modal')" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 p-5 space-y-4">
+            <h3 id="confirm-title" class="font-semibold text-base text-slate-800 dark:text-slate-100">Confirm Action</h3>
+            <p id="confirm-message" class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed"></p>
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" onclick="closeConfirmModal(false)" class="px-3.5 py-2 rounded-xl text-xs font-medium bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600 transition">Cancel</button>
+                <button id="confirm-ok-btn" type="button" onclick="closeConfirmModal(true)" class="px-3.5 py-2 rounded-xl text-xs font-medium bg-rose-600 text-white hover:bg-rose-700 transition">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let habitsChartInstance = null;
+        let symptomsChartInstance = null;
+        const collapsedStates = {};
+        let editingPoopRef = null;
+        let pendingConfirmResolver = null;
+        let fluidManuallyCleared = false;
+
+        function sanitizeNonNegativeInput(inputEl) {
+            if (!inputEl || inputEl.value === '') return;
+            const num = parseFloat(inputEl.value);
+            if (!isNaN(num) && num < 0) {
+                inputEl.value = 0;
+            }
+        }
+
+        function cleanNonNegativeNumberString(rawVal, allowDecimal = true) {
+            if (rawVal === null || rawVal === undefined) return '';
+            const trimmed = String(rawVal).trim();
+            if (trimmed === '') return '';
+            const num = parseFloat(trimmed);
+            if (isNaN(num) || num < 0) return '0';
+            return allowDecimal ? String(num) : String(Math.floor(num));
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const styles = {
+                success: 'bg-emerald-600 text-white',
+                warning: 'bg-amber-600 text-white',
+                error: 'bg-rose-600 text-white',
+                info: 'bg-slate-800 dark:bg-slate-700 text-white'
+            };
+            toast.className = `px-4 py-2.5 rounded-xl shadow-lg text-xs font-medium pointer-events-auto transition-opacity duration-200 ${styles[type] || styles.info}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                setTimeout(() => toast.remove(), 220);
+            }, 2800);
+        }
+
+        function requestConfirmation({ title, message, confirmLabel = 'Confirm', danger = true }) {
+            return new Promise((resolve) => {
+                pendingConfirmResolver = resolve;
+                document.getElementById('confirm-title').textContent = title;
+                document.getElementById('confirm-message').textContent = message;
+                const okBtn = document.getElementById('confirm-ok-btn');
+                okBtn.textContent = confirmLabel;
+                okBtn.className = danger
+                    ? 'px-3.5 py-2 rounded-xl text-xs font-medium bg-rose-600 text-white hover:bg-rose-700 transition'
+                    : 'px-3.5 py-2 rounded-xl text-xs font-medium bg-blue-600 text-white hover:bg-blue-700 transition';
+                document.getElementById('confirm-modal').classList.remove('hidden');
+            });
+        }
+
+        function closeConfirmModal(confirmed) {
+            document.getElementById('confirm-modal').classList.add('hidden');
+            if (pendingConfirmResolver) {
+                const resolve = pendingConfirmResolver;
+                pendingConfirmResolver = null;
+                resolve(Boolean(confirmed));
+            }
+        }
+
+        function openDataModal() {
+            document.getElementById('data-modal').classList.remove('hidden');
+        }
+
+        function closeDataModal() {
+            document.getElementById('data-modal').classList.add('hidden');
+        }
+
+        function handleBackdropClick(event, modalId) {
+            if (event.target.id === modalId) {
+                if (modalId === 'confirm-modal') {
+                    closeConfirmModal(false);
+                } else if (modalId === 'data-modal') {
+                    closeDataModal();
+                }
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (!document.getElementById('confirm-modal').classList.contains('hidden')) {
+                    closeConfirmModal(false);
+                } else if (!document.getElementById('data-modal').classList.contains('hidden')) {
+                    closeDataModal();
+                }
+            }
+        });
+
+        function initDarkMode() {
+            let isDark = false;
+            try {
+                isDark = localStorage.getItem('dark_mode') === 'true';
+            } catch (err) {
+                isDark = false;
+            }
+            if (isDark) {
+                document.getElementById('html-root').classList.add('dark');
+                document.getElementById('dark-mode-icon').textContent = '☀️ Light';
+            } else {
+                document.getElementById('html-root').classList.remove('dark');
+                document.getElementById('dark-mode-icon').textContent = '🌙 Dark';
+            }
+        }
+
+        function toggleDarkMode() {
+            const htmlRoot = document.getElementById('html-root');
+            const isDark = htmlRoot.classList.toggle('dark');
+            try {
+                localStorage.setItem('dark_mode', isDark);
+            } catch (err) {
+                // Ignore storage write failure
+            }
+            document.getElementById('dark-mode-icon').textContent = isDark ? '☀️ Light' : '🌙 Dark';
+            renderCharts();
+        }
+
+        function getLocalDateString(d = new Date()) {
+            const offset = d.getTimezoneOffset();
+            const adjustedDate = new Date(d.getTime() - (offset * 60 * 1000));
+            return adjustedDate.toISOString().split('T')[0];
+        }
+
+        function getCurrentTimeString() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
+
+        const dateInput = document.getElementById('target-date');
+        const poopDateInput = document.getElementById('poop-date');
+        
+        if (!dateInput.value) {
+            const todayStr = getLocalDateString();
+            dateInput.value = todayStr;
+            poopDateInput.value = todayStr;
+        }
+
+        document.getElementById('poop-time').value = getCurrentTimeString();
+
+        function getDatabase() {
+            try {
+                return JSON.parse(localStorage.getItem('health_tracker_db') || '{}');
+            } catch (err) {
+                showToast('Unable to read saved data from browser storage.', 'error');
+                return {};
+            }
+        }
+
+        function saveDatabase(db) {
+            try {
+                localStorage.setItem('health_tracker_db', JSON.stringify(db));
+                return true;
+            } catch (err) {
+                showToast('Could not save data (storage full or restricted).', 'error');
+                return false;
+            }
+        }
+
+        function updatePainDisplay(val) {
+            const labels = ['0 - None', '1 - Mild', '2 - Moderate', '3 - Uncomfortable', '4 - Painful', '5 - Severe'];
+            document.getElementById('pain-val-display').textContent = labels[val] || val;
+        }
+
+        function calculateTotalFluid() {
+            const size = Math.max(0, parseFloat(document.getElementById('bottle-size').value) || 0);
+            const countInput = document.getElementById('bottle-count');
+            let count = parseFloat(countInput.value);
+            if (isNaN(count) || count < 0) count = 0;
+
+            if (count > 0 || !fluidManuallyCleared) {
+                if (size > 0 && count >= 0) {
+                    const total = Math.round(size * count * 10) / 10;
+                    document.getElementById('exact-fluid').value = total;
+                    if (total > 0) fluidManuallyCleared = false;
+                }
+            }
+            updateSummaryCards();
+        }
+
+        function syncBottlesFromExactFluid() {
+            const size = Math.max(0, parseFloat(document.getElementById('bottle-size').value) || 0);
+            const exactRaw = document.getElementById('exact-fluid').value;
+            const exact = parseFloat(exactRaw);
+
+            if (exactRaw === '' || isNaN(exact)) {
+                fluidManuallyCleared = true;
+                document.getElementById('bottle-count').value = 0;
+                return;
+            }
+
+            fluidManuallyCleared = false;
+            if (size > 0 && exact >= 0) {
+                const rawBottles = exact / size;
+                const halfSteps = Math.round(rawBottles * 2) / 2;
+                document.getElementById('bottle-count').value = halfSteps;
+            }
+        }
+
+        function adjustBottles(amount) {
+            const countInput = document.getElementById('bottle-count');
+            let current = parseFloat(countInput.value);
+            if (isNaN(current) || current < 0) current = 0;
+            current += amount;
+            if (current < 0) current = 0;
+            countInput.value = current;
+            fluidManuallyCleared = false;
+            calculateTotalFluid();
+        }
+
+        function populateFormInputsForDate(dateStr) {
+            const db = getDatabase();
+            fluidManuallyCleared = false;
+            if (db[dateStr]) {
+                document.getElementById('daily-steps').value = db[dateStr].steps || '';
+                document.getElementById('exact-fluid').value = db[dateStr].fluidMl || '';
+                document.getElementById('daily-remarks').value = db[dateStr].remarks || '';
+            } else {
+                document.getElementById('daily-steps').value = '';
+                document.getElementById('exact-fluid').value = '';
+                document.getElementById('daily-remarks').value = '';
+            }
+            syncBottlesFromExactFluid();
+            updateSummaryCards();
+        }
+
+        function onDateSelectorChange() {
+            const targetDate = document.getElementById('target-date').value;
+            populateFormInputsForDate(targetDate);
+            if (!editingPoopRef) {
+                poopDateInput.value = targetDate;
+            }
+            renderHistoryList();
+        }
+
+        function jumpToToday() {
+            const todayStr = getLocalDateString();
+            dateInput.value = todayStr;
+            if (!editingPoopRef) {
+                poopDateInput.value = todayStr;
+            }
+            populateFormInputsForDate(todayStr);
+            renderHistoryList();
+            showToast(`Jumped to ${todayStr}`, 'info');
+        }
+
+        function updateSummaryCards() {
+            const db = getDatabase();
+            const activeDate = dateInput.value || getLocalDateString();
+            const liveSteps = parseFloat(document.getElementById('daily-steps').value);
+            const liveFluid = parseFloat(document.getElementById('exact-fluid').value);
+
+            const steps = !isNaN(liveSteps) && liveSteps >= 0 ? liveSteps : Math.max(0, parseFloat(db[activeDate]?.steps) || 0);
+            const fluid = !isNaN(liveFluid) && liveFluid >= 0 ? liveFluid : Math.max(0, parseFloat(db[activeDate]?.fluidMl) || 0);
+
+            const waterGoal = 2000;
+            const stepsGoal = 10000;
+            const waterPct = Math.round((fluid / waterGoal) * 100);
+            const stepsPct = Math.round((steps / stepsGoal) * 100);
+
+            document.getElementById('summary-date-water').textContent = activeDate.slice(5);
+            document.getElementById('summary-water-val').textContent = `${fluid.toLocaleString()} / 2,000 mL`;
+            const waterBadge = document.getElementById('summary-water-badge');
+            waterBadge.textContent = `${waterPct}%`;
+            waterBadge.className = waterPct >= 100
+                ? 'text-[11px] px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 font-medium'
+                : 'text-[11px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium';
+
+            document.getElementById('summary-date-steps').textContent = activeDate.slice(5);
+            document.getElementById('summary-steps-val').textContent = `${steps.toLocaleString()} / 10,000`;
+            const stepsBadge = document.getElementById('summary-steps-badge');
+            stepsBadge.textContent = `${stepsPct}%`;
+            stepsBadge.className = stepsPct >= 100
+                ? 'text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-medium'
+                : 'text-[11px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium';
+
+            // Rolling 7-day average anchored to Today (today and previous 6 days)
+            const todayStr = getLocalDateString();
+            const anchor = new Date(todayStr + 'T00:00:00');
+            const cutoff = new Date(anchor);
+            cutoff.setDate(anchor.getDate() - 6);
+            const cutoffStr = cutoff.toISOString().split('T')[0];
+
+            const bristolValues = [];
+            Object.keys(db)
+                .filter(d => d >= cutoffStr && d <= todayStr)
+                .forEach(d => {
+                    (db[d].poops || []).forEach(p => {
+                        const val = parseFloat(p.bristol);
+                        if (!isNaN(val)) bristolValues.push(val);
+                    });
+                });
+
+            const bristolValEl = document.getElementById('summary-bristol-val');
+            const bristolBadgeEl = document.getElementById('summary-bristol-badge');
+            if (bristolValues.length > 0) {
+                const avg = bristolValues.reduce((a, b) => a + b, 0) / bristolValues.length;
+                bristolValEl.textContent = `Type ${avg.toFixed(1)}`;
+                bristolBadgeEl.textContent = `${bristolValues.length} ${bristolValues.length === 1 ? 'log' : 'logs'}`;
+                if (avg >= 3 && avg <= 5) {
+                    bristolBadgeEl.className = 'text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 font-medium';
+                } else {
+                    bristolBadgeEl.className = 'text-[11px] px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 font-medium';
+                }
+            } else {
+                bristolValEl.textContent = '--';
+                bristolBadgeEl.textContent = 'No logs';
+                bristolBadgeEl.className = 'text-[11px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium';
+            }
+        }
+
+        function saveHabits() {
+            const db = getDatabase();
+            const targetDate = document.getElementById('target-date').value;
+            if (!targetDate) {
+                showToast('Please select a date first.', 'warning');
+                return;
+            }
+
+            const cleanedSteps = cleanNonNegativeNumberString(document.getElementById('daily-steps').value, false);
+            const cleanedFluid = cleanNonNegativeNumberString(document.getElementById('exact-fluid').value, true);
+            document.getElementById('daily-steps').value = cleanedSteps;
+            document.getElementById('exact-fluid').value = cleanedFluid;
+            
+            if (!db[targetDate]) db[targetDate] = { steps: '', fluidMl: '', remarks: '', poops: [] };
+            
+            db[targetDate].steps = cleanedSteps;
+            db[targetDate].fluidMl = cleanedFluid;
+            db[targetDate].remarks = document.getElementById('daily-remarks').value;
+
+            if (saveDatabase(db)) {
+                updateSummaryCards();
+                renderHistoryList();
+                renderCharts();
+                showToast(`Habits saved for ${targetDate}`, 'success');
+            }
+        }
+
+        async function clearHabits() {
+            const targetDate = document.getElementById('target-date').value;
+            const db = getDatabase();
+            
+            if (!db[targetDate]) {
+                showToast(`No records found for ${targetDate}.`, 'info');
+                return;
+            }
+
+            const confirmed = await requestConfirmation({
+                title: 'Clear Daily Habits',
+                message: `Clear steps, fluid intake, and daily remarks for ${targetDate}? Bowel movement logs for this date will be kept.`,
+                confirmLabel: 'Clear Habits',
+                danger: true
+            });
+            if (!confirmed) return;
+
+            db[targetDate].steps = '';
+            db[targetDate].fluidMl = '';
+            db[targetDate].remarks = '';
+
+            if (!db[targetDate].poops || db[targetDate].poops.length === 0) {
+                delete db[targetDate];
+            }
+
+            if (saveDatabase(db)) {
+                populateFormInputsForDate(targetDate);
+                renderHistoryList();
+                renderCharts();
+                showToast(`Habits cleared for ${targetDate}`, 'info');
+            }
+        }
+
+        function startEditPoop(dateStr, index) {
+            const db = getDatabase();
+            const entry = db[dateStr]?.poops?.[index];
+            if (!entry) return;
+
+            editingPoopRef = { date: dateStr, index };
+            document.getElementById('poop-date').value = dateStr;
+            document.getElementById('poop-time').value = entry.time || getCurrentTimeString();
+            document.getElementById('bristol').value = entry.bristol || '4';
+            document.getElementById('pain-slider').value = entry.pain || 0;
+            updatePainDisplay(entry.pain || 0);
+            document.getElementById('bleeding').value = entry.bleeding || '0';
+            document.getElementById('poop-remark').value = entry.remark || '';
+
+            document.getElementById('poop-form-title').textContent = `✏️ Edit Bowel Movement (#${index + 1})`;
+            document.getElementById('poop-form-subtitle').textContent = `Updating record from ${dateStr}`;
+            document.getElementById('poop-submit-btn').textContent = 'Update Bowel Movement';
+            document.getElementById('poop-cancel-edit-btn').classList.remove('hidden');
+
+            collapsedStates[dateStr] = false;
+            renderHistoryList();
+            document.getElementById('poop-form').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function cancelEditPoop() {
+            editingPoopRef = null;
+            document.getElementById('poop-form-title').textContent = '💩 Bowel Movement';
+            document.getElementById('poop-form-subtitle').textContent = 'Multiple entries allowed.';
+            document.getElementById('poop-submit-btn').textContent = 'Save Bowel Movement';
+            document.getElementById('poop-cancel-edit-btn').classList.add('hidden');
+            document.getElementById('poop-date').value = dateInput.value || getLocalDateString();
+            document.getElementById('poop-time').value = getCurrentTimeString();
+            document.getElementById('pain-slider').value = 0;
+            updatePainDisplay(0);
+            document.getElementById('poop-remark').value = '';
+        }
+
+        async function deletePoopEntry(dateStr, index) {
+            const db = getDatabase();
+            if (!db[dateStr] || !db[dateStr].poops || !db[dateStr].poops[index]) return;
+
+            const confirmed = await requestConfirmation({
+                title: 'Delete Bowel Movement',
+                message: `Delete entry #${index + 1} (${db[dateStr].poops[index].time}) on ${dateStr}?`,
+                confirmLabel: 'Delete',
+                danger: true
+            });
+            if (!confirmed) return;
+
+            db[dateStr].poops.splice(index, 1);
+
+            if (editingPoopRef && editingPoopRef.date === dateStr && editingPoopRef.index === index) {
+                cancelEditPoop();
+            }
+
+            const dayData = db[dateStr];
+            const hasHabits = (dayData.steps && dayData.steps !== '') || (dayData.fluidMl && dayData.fluidMl !== '') || (dayData.remarks && dayData.remarks !== '');
+            if (!hasHabits && dayData.poops.length === 0) {
+                delete db[dateStr];
+            }
+
+            if (saveDatabase(db)) {
+                updateSummaryCards();
+                renderHistoryList();
+                renderCharts();
+                showToast('Bowel movement entry deleted', 'info');
+            }
+        }
+
+        document.getElementById('poop-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const db = getDatabase();
+            const poopDate = document.getElementById('poop-date').value;
+            if (!poopDate) {
+                showToast('Please select a date for the entry.', 'warning');
+                return;
+            }
+
+            const customTime = document.getElementById('poop-time').value || getCurrentTimeString();
+            const poopEntry = {
+                time: customTime,
+                bristol: document.getElementById('bristol').value,
+                pain: document.getElementById('pain-slider').value,
+                bleeding: document.getElementById('bleeding').value,
+                remark: document.getElementById('poop-remark').value || ''
+            };
+
+            if (editingPoopRef) {
+                const { date: origDate, index: origIndex } = editingPoopRef;
+                if (db[origDate] && db[origDate].poops && db[origDate].poops[origIndex]) {
+                    if (origDate === poopDate) {
+                        db[origDate].poops[origIndex] = poopEntry;
+                        db[origDate].poops.sort((a, b) => a.time.localeCompare(b.time));
+                    } else {
+                        db[origDate].poops.splice(origIndex, 1);
+                        const origDay = db[origDate];
+                        const origHasHabits = (origDay.steps && origDay.steps !== '') || (origDay.fluidMl && origDay.fluidMl !== '') || (origDay.remarks && origDay.remarks !== '');
+                        if (!origHasHabits && origDay.poops.length === 0) {
+                            delete db[origDate];
+                        }
+                        if (!db[poopDate]) db[poopDate] = { steps: '', fluidMl: '', remarks: '', poops: [] };
+                        db[poopDate].poops.push(poopEntry);
+                        db[poopDate].poops.sort((a, b) => a.time.localeCompare(b.time));
+                    }
+                }
+                if (saveDatabase(db)) {
+                    cancelEditPoop();
+                    updateSummaryCards();
+                    renderHistoryList();
+                    renderCharts();
+                    showToast(`Updated bowel movement for ${poopDate} at ${customTime}`, 'success');
+                }
+                return;
+            }
+
+            if (!db[poopDate]) db[poopDate] = { steps: '', fluidMl: '', remarks: '', poops: [] };
+            db[poopDate].poops.push(poopEntry);
+            db[poopDate].poops.sort((a, b) => a.time.localeCompare(b.time));
+
+            if (saveDatabase(db)) {
+                document.getElementById('poop-remark').value = '';
+                document.getElementById('poop-time').value = getCurrentTimeString();
+                document.getElementById('pain-slider').value = 0;
+                updatePainDisplay(0);
+                updateSummaryCards();
+                renderHistoryList();
+                renderCharts();
+                showToast(`Logged bowel movement for ${poopDate} at ${customTime}`, 'success');
+            }
+        });
+
+        function toggleCardCollapse(date) {
+            collapsedStates[date] = !collapsedStates[date];
+            renderHistoryList();
+        }
+
+        function clearHistoryFilter() {
+            document.getElementById('filter-date').value = '';
+            document.getElementById('search-query').value = '';
+            document.getElementById('filter-bristol').value = '';
+            document.getElementById('filter-min-pain').value = '';
+            document.getElementById('filter-bleeding').checked = false;
+            document.getElementById('filter-fluid-min').value = '';
+            document.getElementById('filter-fluid-max').value = '';
+            document.getElementById('filter-steps-min').value = '';
+            document.getElementById('filter-steps-max').value = '';
+            renderHistoryList();
+        }
+
+        function poopMatchesSearch(poop, query) {
+            if (!query) return true;
+            const remark = (poop.remark || '').toLowerCase();
+            const bristolType = `type ${poop.bristol || ''}`.toLowerCase();
+            const painText = `pain: ${poop.pain || 0}`.toLowerCase();
+            const bleedLevel = parseInt(poop.bleeding || 0, 10);
+            const bleedText = bleedLevel > 0 ? `bleed bleeding bleed: ${bleedLevel}` : 'bleed: 0';
+            const timeText = (poop.time || '').toLowerCase();
+
+            return (
+                remark.includes(query) ||
+                bristolType.includes(query) ||
+                painText.includes(query) ||
+                bleedText.includes(query) ||
+                timeText.includes(query)
+            );
+        }
+
+        function poopMatchesSymptomFilters(poop, { bristolFilter, minPainFilter, bleedingOnly }) {
+            if (bristolFilter && String(poop.bristol) !== bristolFilter) {
+                return false;
+            }
+            if (minPainFilter !== null && (parseFloat(poop.pain || 0) < minPainFilter)) {
+                return false;
+            }
+            if (bleedingOnly && (parseInt(poop.bleeding || 0, 10) <= 0)) {
+                return false;
+            }
+            return true;
+        }
+
+        function hasActiveSymptomFilters({ bristolFilter, minPainFilter, bleedingOnly }) {
+            return Boolean(bristolFilter) || minPainFilter !== null || bleedingOnly;
+        }
+
+        function renderHistoryList() {
+            const db = getDatabase();
+            const container = document.getElementById('log-container');
+            const targetDate = document.getElementById('target-date').value;
+            const searchQuery = (document.getElementById('search-query').value || '').trim().toLowerCase();
+            const filterDate = document.getElementById('filter-date').value;
+            const bristolFilter = document.getElementById('filter-bristol').value;
+            const minPainRaw = document.getElementById('filter-min-pain').value;
+            const minPainFilter = minPainRaw !== '' ? parseFloat(minPainRaw) : null;
+            const bleedingOnly = document.getElementById('filter-bleeding').checked;
+
+            const fluidMinRaw = document.getElementById('filter-fluid-min').value;
+            const fluidMaxRaw = document.getElementById('filter-fluid-max').value;
+            const fluidMin = fluidMinRaw !== '' ? parseFloat(fluidMinRaw) : null;
+            const fluidMax = fluidMaxRaw !== '' ? parseFloat(fluidMaxRaw) : null;
+
+            const stepsMinRaw = document.getElementById('filter-steps-min').value;
+            const stepsMaxRaw = document.getElementById('filter-steps-max').value;
+            const stepsMin = stepsMinRaw !== '' ? parseFloat(stepsMinRaw) : null;
+            const stepsMax = stepsMaxRaw !== '' ? parseFloat(stepsMaxRaw) : null;
+
+            container.innerHTML = '';
+
+            let dates = Object.keys(db).sort().reverse();
+            if (filterDate) {
+                dates = dates.filter(d => d === filterDate);
+            }
+
+            if (dates.length === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-400">No records found matching criteria.</p>';
+                return;
+            }
+
+            const symptomFiltersActive = hasActiveSymptomFilters({ bristolFilter, minPainFilter, bleedingOnly });
+            const anyFilterActive = Boolean(
+                searchQuery ||
+                filterDate ||
+                symptomFiltersActive ||
+                fluidMin !== null ||
+                fluidMax !== null ||
+                stepsMin !== null ||
+                stepsMax !== null
+            );
+
+            let renderedCount = 0;
+
+            dates.forEach(date => {
+                const dayData = db[date];
+                const dailyRemark = (dayData.remarks || '').toLowerCase();
+                const allPoops = dayData.poops || [];
+                const dayFluid = parseFloat(dayData.fluidMl) || 0;
+                const daySteps = parseFloat(dayData.steps) || 0;
+
+                if (stepsMin !== null && daySteps < stepsMin) return;
+                if (stepsMax !== null && daySteps > stepsMax) return;
+
+                if (fluidMin !== null && dayFluid < fluidMin) return;
+                if (fluidMax !== null && dayFluid > fluidMax) return;
+
+                const matchingPoops = allPoops.filter(p => {
+                    const passesSymptom = poopMatchesSymptomFilters(p, { bristolFilter, minPainFilter, bleedingOnly });
+                    const passesSearch = poopMatchesSearch(p, searchQuery);
+                    return passesSymptom && passesSearch;
+                });
+
+                const dailyTextMatches = !searchQuery || dailyRemark.includes(searchQuery) || date.includes(searchQuery);
+
+                if (symptomFiltersActive) {
+                    if (matchingPoops.length === 0) return;
+                } else if (searchQuery) {
+                    if (!dailyTextMatches && matchingPoops.length === 0) return;
+                }
+
+                renderedCount++;
+
+                const poopsToDisplay = (symptomFiltersActive || searchQuery) && matchingPoops.length > 0
+                    ? matchingPoops
+                    : allPoops;
+
+                const isCollapsed = anyFilterActive
+                    ? false
+                    : (collapsedStates[date] !== undefined ? collapsedStates[date] : true);
+
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-xl border ${date === targetDate ? 'bg-blue-50/50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800' : 'bg-slate-50 dark:bg-slate-900 border-slate-100 dark:border-slate-800'} space-y-2`;
+                
+                let poopsHtml = '';
+                if (!isCollapsed) {
+                    if (poopsToDisplay.length > 0) {
+                        poopsHtml = '<div class="space-y-1.5 mt-2 border-t dark:border-slate-800 pt-2"><div class="text-xs font-medium text-slate-500 dark:text-slate-400">Bowel Movements:</div>';
+                        poopsToDisplay.forEach((p) => {
+                            const origIdx = allPoops.indexOf(p);
+                            const displayIdx = origIdx >= 0 ? origIdx : 0;
+                            const isEditingThis = editingPoopRef && editingPoopRef.date === date && editingPoopRef.index === origIdx;
+                            poopsHtml += `
+                                <div class="text-xs bg-white dark:bg-slate-800 p-2 rounded border ${isEditingThis ? 'border-blue-400 dark:border-blue-500 ring-1 ring-blue-400/40' : 'border-slate-200 dark:border-slate-700'} flex justify-between items-center gap-2">
+                                    <div class="space-y-0.5 min-w-0">
+                                        <div><span class="font-bold text-slate-700 dark:text-slate-200">#${displayIdx + 1}</span> (${p.time}) — Type ${p.bristol} | <span class="text-slate-600 dark:text-slate-300">Pain: ${p.pain}/5 | Bleed: ${p.bleeding}</span></div>
+                                        ${p.remark ? `<div class="text-[11px] text-slate-500 dark:text-slate-400 italic break-words">Remark: ${p.remark}</div>` : ''}
+                                    </div>
+                                    <div class="flex items-center gap-1 shrink-0">
+                                        <button type="button" onclick="startEditPoop('${date}', ${origIdx})" class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600 px-2 py-0.5 rounded text-[10px] font-medium hover:bg-slate-200 dark:hover:bg-slate-600 transition" title="Edit this entry">Edit</button>
+                                        <button type="button" onclick="deletePoopEntry('${date}', ${origIdx})" class="bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 px-2 py-0.5 rounded text-[10px] font-bold hover:bg-rose-100 dark:hover:bg-rose-900 transition" title="Delete this entry">×</button>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        poopsHtml += '</div>';
+                    } else {
+                        poopsHtml = '<div class="text-xs text-slate-400 dark:text-slate-500 mt-1">No bowel movements logged.</div>';
+                    }
+                }
+
+                let remarksHtml = (!isCollapsed && dayData.remarks) ? `<div class="text-xs text-slate-600 dark:text-slate-300 italic bg-white/60 dark:bg-slate-800 p-1.5 rounded border border-slate-200 dark:border-slate-700">Daily Note: ${dayData.remarks}</div>` : '';
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <div class="cursor-pointer flex-1" onclick="toggleCardCollapse('${date}')">
+                            <span class="font-semibold text-slate-700 dark:text-slate-200">${date} ${date === targetDate ? '(Selected)' : ''} <span class="text-[10px] text-slate-400">(${isCollapsed ? '▼ Expand' : '▲ Collapse'})</span></span>
+                            <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">🚶‍♂️ ${daySteps} steps | 💧 ${dayFluid} mL | 💩 ${poopsToDisplay.length} logs</div>
+                        </div>
+                        <div class="flex gap-1">
+                            <button type="button" onclick="selectDate('${date}')" class="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 px-2.5 py-1 rounded-lg text-[10px] font-medium hover:bg-slate-200 transition">Select</button>
+                        </div>
+                    </div>
+                    ${remarksHtml}
+                    ${poopsHtml}
+                `;
+                container.appendChild(card);
+            });
+
+            if (renderedCount === 0) {
+                container.innerHTML = '<p class="text-xs text-slate-400">No logs match your search or filters.</p>';
+            }
+        }
+
+        function selectDate(dateStr) {
+            document.getElementById('target-date').value = dateStr;
+            if (!editingPoopRef) {
+                document.getElementById('poop-date').value = dateStr;
+            }
+            populateFormInputsForDate(dateStr);
+            renderHistoryList();
+        }
+
+        // Drag and Drop handlers for Import JSON drop zone
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const dropZone = document.getElementById('drop-zone');
+            dropZone.classList.add('border-blue-500', 'bg-blue-50/50', 'dark:bg-blue-950/30');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const dropZone = document.getElementById('drop-zone');
+            dropZone.classList.remove('border-blue-500', 'bg-blue-50/50', 'dark:bg-blue-950/30');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const dropZone = document.getElementById('drop-zone');
+            dropZone.classList.remove('border-blue-500', 'bg-blue-50/50', 'dark:bg-blue-950/30');
+
+            const files = e.dataTransfer.files;
+            if (files && files.length > 0) {
+                const file = files[0];
+                if (file.name.endsWith('.json')) {
+                    processImportFile(file);
+                } else {
+                    showToast('Please drop a valid .json backup file.', 'warning');
+                }
+            }
+        }
+
+        function processImportFile(file) {
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const importedDb = JSON.parse(e.target.result);
+                    if (typeof importedDb === 'object' && importedDb !== null && !Array.isArray(importedDb)) {
+                        const confirmed = await requestConfirmation({
+                            title: 'Import JSON Backup',
+                            message: 'Importing this JSON backup will overwrite your current database records. Proceed?',
+                            confirmLabel: 'Import Data',
+                            danger: true
+                        });
+                        if (!confirmed) return;
+
+                        if (saveDatabase(importedDb)) {
+                            cancelEditPoop();
+                            populateFormInputsForDate(document.getElementById('target-date').value);
+                            renderHistoryList();
+                            renderCharts();
+                            closeDataModal();
+                            showToast('Data imported successfully', 'success');
+                        }
+                    } else {
+                        showToast('Invalid backup file format.', 'error');
+                    }
+                } catch (err) {
+                    showToast('Error parsing JSON file.', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            processImportFile(file);
+            event.target.value = '';
+        }
+
+        // Custom Chart.js plugin to draw horizontal target lines
+        const targetLinePlugin = {
+            id: 'targetLinePlugin',
+            afterDraw(chart, args, options) {
+                if (!options || !Array.isArray(options.lines)) return;
+                const { ctx, chartArea: { left, right }, scales } = chart;
+                const yAxis = scales.y;
+                const y1Axis = scales.y1;
+
+                options.lines.forEach(item => {
+                    const targetScale = item.scale === 'y1' ? y1Axis : yAxis;
+                    if (!targetScale) return;
+
+                    if (targetScale.min <= item.value && targetScale.max >= item.value) {
+                        const yCoord = targetScale.getPixelForValue(item.value);
+                        ctx.save();
+                        ctx.strokeStyle = item.color;
+                        ctx.lineWidth = 1.5;
+                        ctx.setLineDash([4, 4]);
+                        ctx.beginPath();
+                        ctx.moveTo(left, yCoord);
+                        ctx.lineTo(right, yCoord);
+                        ctx.stroke();
+
+                        ctx.fillStyle = item.color;
+                        ctx.font = '9px sans-serif';
+                        ctx.fillText(item.label, left + 4, yCoord - 4);
+                        ctx.restore();
+                    }
+                });
+            }
+        };
+        Chart.register(targetLinePlugin);
+
+        // Render Trend Charts with strict calendar date range filtering
+        function renderCharts() {
+            const db = getDatabase();
+            const rangeVal = document.getElementById('chart-range').value;
+            
+            const activeDates = Object.keys(db).filter(d => {
+                const data = db[d];
+                const hasHabits = (data.steps && parseFloat(data.steps) > 0) || (data.fluidMl && parseFloat(data.fluidMl) > 0) || (data.remarks && data.remarks.trim() !== '');
+                const hasPoops = data.poops && data.poops.length > 0;
+                return hasHabits || hasPoops;
+            }).sort();
+
+            let sortedDates = activeDates;
+            if (rangeVal !== 'all' && activeDates.length > 0) {
+                const limitDays = parseInt(rangeVal, 10);
+                const latestDateStr = activeDates[activeDates.length - 1];
+                const anchorDate = new Date(latestDateStr + 'T00:00:00');
+                
+                const cutoffDate = new Date(anchorDate);
+                cutoffDate.setDate(anchorDate.getDate() - (limitDays - 1));
+                const cutoffStr = cutoffDate.toISOString().split('T')[0];
+
+                sortedDates = activeDates.filter(d => d >= cutoffStr);
+            }
+
+            const hasData = sortedDates.length > 0;
+            const labels = hasData ? sortedDates.map(d => d.slice(5)) : ['No Data'];
+
+            const isDark = document.getElementById('html-root').classList.contains('dark');
+            const gridColor = isDark ? '#334155' : '#e2e8f0';
+            const defaultTextColor = isDark ? '#94a3b8' : '#64748b';
+
+            const logCountPerDate = sortedDates.map(d => (db[d].poops || []).length);
+            const hasBleedingPerDate = sortedDates.map(d => {
+                const poops = db[d].poops || [];
+                return poops.some(p => parseInt(p.bleeding || 0, 10) > 0);
+            });
+
+            // --- Chart 1: Steps & Fluid ---
+            const stepsData = hasData ? sortedDates.map(d => Math.max(0, parseFloat(db[d].steps) || 0)) : [null];
+            const waterData = hasData ? sortedDates.map(d => Math.max(0, parseFloat(db[d].fluidMl) || 0)) : [null];
+
+            if (habitsChartInstance) habitsChartInstance.destroy();
+            const ctx1 = document.getElementById('habitsChart').getContext('2d');
+            habitsChartInstance = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Water (mL)',
+                            data: waterData,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            yAxisID: 'y',
+                            tension: 0.2,
+                            fill: true
+                        },
+                        {
+                            label: 'Steps',
+                            data: stepsData,
+                            borderColor: '#10b981',
+                            backgroundColor: 'transparent',
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            yAxisID: 'y1',
+                            tension: 0.2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: { color: gridColor },
+                            ticks: { color: defaultTextColor, font: { size: 10 } }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            suggestedMin: 0,
+                            suggestedMax: 3000,
+                            grid: { color: gridColor },
+                            ticks: { color: defaultTextColor, font: { size: 10 } },
+                            title: { display: true, text: 'Water (mL)', color: defaultTextColor, font: { size: 10 } }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            suggestedMin: 0,
+                            suggestedMax: 12000,
+                            grid: { drawOnChartArea: false },
+                            ticks: { color: defaultTextColor, font: { size: 10 } },
+                            title: { display: true, text: 'Steps', color: defaultTextColor, font: { size: 10 } }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: defaultTextColor,
+                                font: { size: 11 },
+                                usePointStyle: true,
+                                pointStyle: 'line',
+                                boxWidth: 26,
+                                borderWidth: 3
+                            }
+                        },
+                        targetLinePlugin: {
+                            lines: hasData ? [
+                                { value: 2000, scale: 'y', color: 'rgba(59, 130, 246, 0.7)', label: 'Water Target: 2000mL' },
+                                { value: 10000, scale: 'y1', color: 'rgba(16, 185, 129, 0.7)', label: 'Steps Target: 10,000' }
+                            ] : []
+                        }
+                    }
+                }
+            });
+
+            // --- Chart 2: Hardness & Pain ---
+            const hardnessData = hasData ? sortedDates.map(d => {
+                const poops = db[d].poops || [];
+                if (poops.length === 0) return null;
+                const sum = poops.reduce((acc, p) => acc + parseInt(p.bristol || 4, 10), 0);
+                return Number((sum / poops.length).toFixed(1));
+            }) : [null];
+
+            const painData = hasData ? sortedDates.map(d => {
+                const poops = db[d].poops || [];
+                if (poops.length === 0) return null;
+                const sum = poops.reduce((acc, p) => acc + parseFloat(p.pain || 0), 0);
+                return Number((sum / poops.length).toFixed(1));
+            }) : [null];
+
+            if (symptomsChartInstance) symptomsChartInstance.destroy();
+            const ctx2 = document.getElementById('symptomsChart').getContext('2d');
+            symptomsChartInstance = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Hardness (1-7)',
+                            data: hardnessData,
+                            borderColor: '#8b5cf6',
+                            backgroundColor: 'transparent',
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            yAxisID: 'y',
+                            tension: 0.2,
+                            spanGaps: true
+                        },
+                        {
+                            label: 'Pain (0-5)',
+                            data: painData,
+                            borderColor: '#ef4444',
+                            backgroundColor: 'transparent',
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            yAxisID: 'y1',
+                            tension: 0.2,
+                            spanGaps: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: { color: gridColor },
+                            ticks: {
+                                font: { size: 10 },
+                                color: function(context) {
+                                    const index = context.index;
+                                    return hasBleedingPerDate[index] ? '#ef4444' : defaultTextColor;
+                                }
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            min: 1,
+                            max: 7,
+                            grid: { color: gridColor },
+                            ticks: { color: defaultTextColor, font: { size: 10 }, stepSize: 1 },
+                            title: { display: true, text: 'Hardness', color: defaultTextColor, font: { size: 10 } }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            min: 0,
+                            max: 5,
+                            grid: { drawOnChartArea: false },
+                            ticks: { color: defaultTextColor, font: { size: 10 }, stepSize: 1 },
+                            title: { display: true, text: 'Pain (0-5)', color: defaultTextColor, font: { size: 10 } }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: defaultTextColor,
+                                font: { size: 11 },
+                                usePointStyle: true,
+                                pointStyle: 'line',
+                                boxWidth: 26,
+                                borderWidth: 3
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                afterBody(items) {
+                                    if (!hasData || !items.length) return [];
+                                    const idx = items[0].dataIndex;
+                                    const logsCount = logCountPerDate[idx] || 0;
+                                    const bleedStatus = hasBleedingPerDate[idx] ? 'Yes' : 'No';
+                                    return [`Logs that day: ${logsCount}`, `Bleeding recorded: ${bleedStatus}`];
+                                }
+                            }
+                        },
+                        targetLinePlugin: {
+                            lines: hasData ? [
+                                { value: 4, scale: 'y', color: 'rgba(139, 92, 246, 0.5)', label: 'Ideal Stool (Type 4)' }
+                            ] : []
+                        }
+                    }
+                }
+            });
+        }
+
+        function exportJSON() {
+            const db = getDatabase();
+            const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `health_tracker_backup_${getLocalDateString()}.json`;
+            a.click();
+            setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+            showToast('Backup JSON exported', 'success');
+        }
+
+        initDarkMode();
+        populateFormInputsForDate(dateInput.value);
+        renderHistoryList();
+        renderCharts();
+    </script>
+</body>
+</html>
