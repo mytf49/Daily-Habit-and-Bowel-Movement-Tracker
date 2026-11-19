@@ -1,40 +1,44 @@
-# 💩 Daily Habit and Bowel Movement Tracker
+# Daily Habit and Bowel Movement Tracker
 
-A lightweight, fully private, client-side health and habit dashboard designed to help you track daily lifestyle habits alongside gastrointestinal symptoms and bowel movements. 
+A single-file web dashboard for logging daily habits (steps, water/fluid intake, and notes) alongside bowel movements (Bristol stool scale, pain level, bleeding severity, time, and remarks), complete with trend charts, multi-criteria filtering, dark mode, and local JSON backup/restore.
 
-Built as a single, self-contained file using **HTML**, **Tailwind CSS**, and **Chart.js**, with zero backend or external servers required—all records stay entirely secure and private in your browser's `localStorage`.
+**Live Demo:** [https://mytf49.github.io/Daily-Habit-and-Bowel-Movement-Tracker/](https://mytf49.github.io/Daily-Habit-and-Bowel-Movement-Tracker/)
 
-> **🤖 Note:** This project was co-created and built with the assistance of AI (Gemini) as a personal project.
-
----
-
-## 🌟 Features
-
-* **🚶‍♂️ Daily Habits Tracking:** Log daily step counts and water/fluid intake (using a convenient bottle size multiplier or exact mL entries) alongside daily personal notes.
-* **💩 Bowel Movement Logging:** Log multiple bowel movement events per day with timestamps, Bristol Stool Scale types (1–7), pain scale ratings (0–5), and bleeding severity indicators.
-* **📊 Visual Trend Analysis:** Interactive dual-axis charts powered by Chart.js displaying trends over 7 days, 14 days, 30 days, or all time, complete with target reference lines.
-* **📂 Data Management:** Easily export your complete database to a JSON backup file or restore/import records via drag-and-drop.
-* **🌙 Dark Mode Support:** Seamlessly toggle between light and dark themes with persistent state storage.
-* **📱 Fully Responsive:** Optimized mobile-first view that scales up smoothly into a multi-column dashboard grid on large desktop screens.
+**Current Build:** `1.0b3_20261119`
 
 ---
 
-## 🚀 Getting Started / Installation
+## Features
 
-Since this project is contained within a single `index.html` file, running or hosting it is effortless:
-
-1. Download or clone this repository.
-2. Double-click the `index.html` file to open and run it instantly in any modern web browser.
-3. *(Optional)* Host it for free on **GitHub Pages** to access and update your health logs securely from your phone or any other device.
+- **Summary Strip:** At-a-glance cards showing fluid intake vs. a `2,000 mL` daily target, total steps vs. a `10,000` daily step target, and a rolling 7-day average Bristol stool type.
+- **Trend Analysis Charts:**
+  - **Steps vs. Water Intake (mL):** Dual-axis line chart with dashed target reference lines (`2,000 mL` water and `10,000` steps) and date range selector (`Last 7 Days`, `Last 14 Days`, `Last 30 Days`, `All Time`).
+  - **Bristol Hardness & Pain:** Dual-axis line chart tracking average Bristol type (`1–7`) with a `Type 4` reference line and average pain (`0–5`), highlighting dates with bleeding in red on the x-axis and providing log count + bleeding status in tooltips.
+- **🌿 Daily Habits Logging:**
+  - Date selector with a quick **Today** jump button.
+  - Step counter and a unified fluid intake box supporting bottle size × bottle count (`±0.5` step buttons) or exact total fluid in `mL` with two-way syncing.
+  - Daily remarks/notes, **Save Habits**, and **Clear Habits**.
+- **💩 Bowel Movement Logging:**
+  - Supports multiple entries per day with customizable date and time.
+  - Bristol stool scale (`Type 1` to `Type 7`), `0–5` pain scale slider, bleeding level (`0–3`), optional remarks, plus **Edit** and **Delete** support for existing entries.
+- **🕒 History & Data Filtering:**
+  - Collapsible daily log cards with date selection and search/filtering by keyword, specific date, stool type (`1–7`), minimum pain level (`1+` to `5`), bleeding presence, fluid range (`Min–Max mL`), and steps range (`Min–Max`).
+- **Data Management (JSON Import & Export):**
+  - Export all records to a timestamped `.json` backup file or import a `.json` backup via drag-and-drop or file picker.
+- **Dark Mode & Local Storage:**
+  - Persistent light/dark theme toggle and automatic browser `localStorage` persistence.
 
 ---
 
-## 🔒 Privacy Notice
+## Usage
 
-Your data privacy is 100% protected. **Daily Habit and Bowel Movement Tracker** does not use cookies, analytics, or third-party databases. All logs are stored strictly inside your browser's local storage environment (`localStorage`), meaning your health data never leaves your device unless you manually export a JSON backup.
+1. Open [https://mytf49.github.io/Daily-Habit-and-Bowel-Movement-Tracker/](https://mytf49.github.io/Daily-Habit-and-Bowel-Movement-Tracker/) (or open `index.html` locally in any modern browser).
+2. Use **🌿 Daily Habits** to record daily steps, fluid intake, and notes for the selected date.
+3. Use **💩 Bowel Movement** to log one or more entries for a date and time.
+4. Review trends in **📊 Trend Analysis**, search or filter past entries in **🕒 History & Data**, and periodically export a **JSON** backup via **📂 Data Management**.
 
 ---
 
-## 📄 License
+## Data & Privacy
 
-This project is open-source and available for personal health tracking use.
+All tracking data is stored locally in your browser's `localStorage` under the key `health_tracker_db` (with theme preference under `dark_mode`). Nothing is sent to an external server by the app itself, so exporting JSON backups is recommended if you switch browsers or clear site data.
