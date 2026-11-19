@@ -11,7 +11,7 @@ A single-file web dashboard for logging daily habits (steps, water/fluid intake,
 ## Features
 
 - **Summary Strip:** At-a-glance cards showing fluid intake vs. a `2,000 mL` daily target, total steps vs. a `10,000` daily step target, and a rolling 7-day average Bristol stool type.
-- **Trend Analysis Charts:**
+- **📊 Trend Analysis Charts:**
   - **Steps vs. Water Intake (mL):** Dual-axis line chart with dashed target reference lines (`2,000 mL` water and `10,000` steps) and date range selector (`Last 7 Days`, `Last 14 Days`, `Last 30 Days`, `All Time`).
   - **Bristol Hardness & Pain:** Dual-axis line chart tracking average Bristol type (`1–7`) with a `Type 4` reference line and average pain (`0–5`), highlighting dates with bleeding in red on the x-axis and providing log count + bleeding status in tooltips.
 - **🌿 Daily Habits Logging:**
@@ -23,7 +23,7 @@ A single-file web dashboard for logging daily habits (steps, water/fluid intake,
   - Bristol stool scale (`Type 1` to `Type 7`), `0–5` pain scale slider, bleeding level (`0–3`), optional remarks, plus **Edit** and **Delete** support for existing entries.
 - **🕒 History & Data Filtering:**
   - Collapsible daily log cards with date selection and search/filtering by keyword, specific date, stool type (`1–7`), minimum pain level (`1+` to `5`), bleeding presence, fluid range (`Min–Max mL`), and steps range (`Min–Max`).
-- **Data Management (JSON Import & Export):**
+- **📂 Data Management (JSON Import & Export):**
   - Export all records to a timestamped `.json` backup file or import a `.json` backup via drag-and-drop or file picker.
 - **Dark Mode & Local Storage:**
   - Persistent light/dark theme toggle and automatic browser `localStorage` persistence.
