@@ -1,19 +1,20 @@
-# Live Markdown Editor
+# Daily Habit and Bowel Movement Tracker
 
-Write, edit, and preview Markdown in real time with syntax highlighting, formatting shortcuts, find & replace, and export options.
+A simple web app for tracking daily water intake, steps, notes, and bowel movements, with trend charts, search and filters, and JSON backup/restore.
 
 ## Live Demo
 
-Open the app here: **[https://mytf49.github.io/Live-Markdown-Editor/](https://mytf49.github.io/Live-Markdown-Editor/)**
+Open the app here: **[https://mytf49.github.io/Daily-Habit-and-Bowel-Movement-Tracker/](https://mytf49.github.io/Daily-Habit-and-Bowel-Movement-Tracker/)**
 
 ## Features
 
-- **Live Preview & Split Panes:** View rendered Markdown alongside your source text, switch between Split, Editor, and Preview modes, drag the divider to resize panes, and toggle synchronized scrolling.
-- **Formatting & Insert Toolbar:** Quick actions for headings (`H1`–`H3`), bold, italic, strikethrough, inline code, links, images, custom-sized tables, blockquotes, lists, task checkboxes, and fenced code blocks.
-- **Find & Replace:** Search text across your document and replace single matches or all matches.
-- **Heading Outline & Undo/Redo:** Jump to `#`–`###` headings from the outline bar and step back or forward through edit snapshots.
-- **Import & Export:** Import `.md`, `.markdown`, or `.txt` files (including drag-and-drop), copy Markdown or HTML, save as `.md`, `.txt`, or `.html`, or print/save as PDF.
-- **Dark Mode & Auto-Save:** Switch between light and dark themes and keep your current document and filename auto-saved in your browser.
+- **Daily Summary:** See fluid progress (toward 2,000 mL), step progress (toward 10,000 steps), and your 7-day average Bristol stool type at a glance.
+- **Trend Charts:** View line charts for **Steps vs. Water Intake** and **Bristol Hardness vs. Pain** across `7`, `14`, `30` days, or `All Time`, including target lines and bleeding indicators.
+- **Daily Habits:** Log steps, water intake (by bottle count or exact mL), and daily notes for any date.
+- **Bowel Movement Log:** Record multiple entries per day with date, time, Bristol type (`1`–`7`), pain (`0`–`5`), bleeding (`0`–`3`), and optional notes, with edit and delete support.
+- **Search & Filters:** Search notes or filter entries by date, stool type, minimum pain, bleeding, fluid range, or step range.
+- **Dark Mode:** Switch between light and dark themes.
+- **Backup & Restore:** Export your data to a `.json` file or import a saved backup anytime.
 
 ## How to Run Locally
 
@@ -22,4 +23,4 @@ Open the app here: **[https://mytf49.github.io/Live-Markdown-Editor/](https://my
 
 ## Privacy & Data
 
-Your notes, document name, and theme setting are stored locally in your browser on your device — nothing is uploaded to an external server. Export or save a copy of your file before clearing browser data or switching devices.
+Your logs and theme preference stay in your browser on your device — nothing is uploaded to an external server. Export a JSON backup in **Data Management** before clearing browser data or moving to another device.
