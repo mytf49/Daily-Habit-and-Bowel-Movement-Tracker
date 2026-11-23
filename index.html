@@ -188,11 +188,6 @@
       -moz-appearance: textfield;
     }
 
-    input[type="date"]::-webkit-calendar-picker-indicator,
-    input[type="time"]::-webkit-calendar-picker-indicator {
-      cursor: pointer;
-    }
-
     input:focus, select:focus, textarea:focus {
       border-color: var(--accent);
       box-shadow: 0 0 0 3px var(--accent-soft);
@@ -202,6 +197,7 @@
     input[type="range"] {
       display: block;
       width: 100%;
+      min-width: 0;
       margin: 6px 0 2px;
       padding: 0;
       accent-color: var(--accent);
@@ -213,6 +209,9 @@
       position: sticky;
       top: 0;
       z-index: 30;
+      width: 100%;
+      max-width: 100%;
+      overflow-x: clip;
       backdrop-filter: blur(12px);
       background: color-mix(in srgb, var(--surface) 88%, transparent);
       border-bottom: 1px solid var(--border);
@@ -220,12 +219,14 @@
 
     .header-inner {
       max-width: 1560px;
+      width: 100%;
       margin: 0 auto;
       padding: 12px 18px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
+      flex-wrap: wrap;
     }
 
     .brand {
@@ -233,6 +234,7 @@
       align-items: center;
       gap: 11px;
       min-width: 0;
+      max-width: 100%;
     }
 
     .brand-logo {
@@ -262,8 +264,35 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      flex-shrink: 0;
+      flex-wrap: wrap;
+      min-width: 0;
+      max-width: 100%;
     }
+
+    .header-actions > button {
+      height: 36px;
+      padding: 0 12px;
+      font-size: 0.875rem;
+      white-space: nowrap;
+    }
+
+    #themeToggleBtn {
+      display: inline-grid;
+      align-items: center;
+      justify-items: center;
+    }
+
+    .theme-label-light,
+    .theme-label-dark {
+      grid-area: 1 / 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+
+    html[data-theme="light"] .theme-label-light { visibility: hidden; }
+    html[data-theme="dark"] .theme-label-dark { visibility: hidden; }
 
     /* Main Container */
     .container {
@@ -317,6 +346,7 @@
       color: var(--text-muted);
       border: 1px solid var(--border);
       white-space: nowrap;
+      font-variant-numeric: tabular-nums;
     }
 
     .badge.accent {
@@ -702,7 +732,7 @@
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      z-index: 50;
+      z-index: 60;
       background: rgba(12, 15, 23, 0.55);
       backdrop-filter: blur(4px);
       display: flex;
@@ -851,9 +881,12 @@
       .header-inner {
         padding: 10px 14px;
         gap: 8px;
+        flex-wrap: nowrap;
       }
       .brand {
         gap: 8px;
+        flex: 1;
+        min-width: 0;
       }
       .brand-logo {
         width: 32px;
@@ -867,9 +900,16 @@
         white-space: normal;
         overflow: visible;
         text-overflow: clip;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+      .header-actions {
+        width: auto;
+        flex-shrink: 0;
       }
       #themeToggleBtn {
-        padding: 6px 9px;
+        height: 32px;
+        padding: 0 9px;
         font-size: 0.78rem;
       }
       .container {
@@ -896,7 +936,8 @@
       </div>
       <div class="header-actions">
         <button id="themeToggleBtn" type="button" onclick="toggleDarkMode()" title="Toggle light/dark theme" aria-label="Toggle light/dark theme">
-          <span id="dark-mode-icon">🌙 Dark</span>
+          <span class="theme-label-light">☀️ Light</span>
+          <span class="theme-label-dark">🌙 Dark</span>
         </button>
       </div>
     </div>
@@ -1095,13 +1136,13 @@
       <section class="card">
         <div class="card-header">
           <h2 class="card-title">🕒 History &amp; Data</h2>
-          <button type="button" class="sm primary" onclick="openDataModal()">📂 Data Management</button>
+          <button type="button" id="openDataModalBtn" class="sm primary" onclick="openDataModal()">📂 Data Management</button>
         </div>
         <div class="card-body stack">
           <div class="panel-box">
             <div class="field">
               <label for="search-query">Search Notes / Remarks</label>
-              <input type="text" id="search-query" class="compact" oninput="renderHistoryList()" placeholder="e.g., fiber, type 1, bleed..." />
+              <input type="text" id="search-query" class="compact" oninput="scheduleHistoryRender()" placeholder="e.g., fiber, type 1, bleed..." />
             </div>
 
             <div class="two-col">
@@ -1147,16 +1188,16 @@
             <div class="field">
               <label>Fluid Intake Range (mL)</label>
               <div class="two-col">
-                <input type="number" id="filter-fluid-min" class="compact" min="0" placeholder="Min mL" oninput="sanitizeNonNegativeInput(this); renderHistoryList();" />
-                <input type="number" id="filter-fluid-max" class="compact" min="0" placeholder="Max mL" oninput="sanitizeNonNegativeInput(this); renderHistoryList();" />
+                <input type="number" id="filter-fluid-min" class="compact" min="0" placeholder="Min mL" oninput="sanitizeNonNegativeInput(this); scheduleHistoryRender();" />
+                <input type="number" id="filter-fluid-max" class="compact" min="0" placeholder="Max mL" oninput="sanitizeNonNegativeInput(this); scheduleHistoryRender();" />
               </div>
             </div>
 
             <div class="field">
               <label>Steps Range</label>
               <div class="two-col">
-                <input type="number" id="filter-steps-min" class="compact" min="0" placeholder="Min steps" oninput="sanitizeNonNegativeInput(this); renderHistoryList();" />
-                <input type="number" id="filter-steps-max" class="compact" min="0" placeholder="Max steps" oninput="sanitizeNonNegativeInput(this); renderHistoryList();" />
+                <input type="number" id="filter-steps-min" class="compact" min="0" placeholder="Min steps" oninput="sanitizeNonNegativeInput(this); scheduleHistoryRender();" />
+                <input type="number" id="filter-steps-max" class="compact" min="0" placeholder="Max steps" oninput="sanitizeNonNegativeInput(this); scheduleHistoryRender();" />
               </div>
             </div>
 
@@ -1180,7 +1221,7 @@
       </div>
 
       <div class="data-grid">
-        <div class="field" style="flex: 1;">
+        <div class="field">
           <label>📥 Import JSON</label>
           <label id="drop-zone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)" class="dropzone">
             <span style="font-size: 1.25rem;">📄</span>
@@ -1189,7 +1230,7 @@
           </label>
         </div>
 
-        <div class="field" style="flex: 1;">
+        <div class="field">
           <label>📤 Export JSON</label>
           <div class="export-box">
             <span style="font-size: 1.25rem;">💾</span>
@@ -1228,7 +1269,18 @@
     const collapsedStates = {};
     let editingPoopRef = null;
     let pendingConfirmResolver = null;
+    let lastModalTrigger = null;
     let fluidManuallyCleared = false;
+    let historyFilterTimer = null;
+
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
 
     function sanitizeNonNegativeInput(inputEl) {
       if (!inputEl || inputEl.value === '') return;
@@ -1260,8 +1312,17 @@
       }, duration);
     }
 
-    function requestConfirmation({ title, message, confirmLabel = 'Confirm', danger = true }) {
+    function restoreModalFocus() {
+      const trigger = lastModalTrigger;
+      lastModalTrigger = null;
+      if (trigger && typeof trigger.focus === 'function' && document.contains(trigger)) {
+        trigger.focus();
+      }
+    }
+
+    function requestConfirmation({ title, message, confirmLabel = 'Confirm', danger = true, trigger = null }) {
       return new Promise((resolve) => {
+        lastModalTrigger = trigger || document.activeElement;
         pendingConfirmResolver = resolve;
         document.getElementById('confirm-title').textContent = title;
         document.getElementById('confirm-message').textContent = message;
@@ -1269,11 +1330,13 @@
         okBtn.textContent = confirmLabel;
         okBtn.className = danger ? 'sm danger' : 'sm primary';
         document.getElementById('confirm-modal').classList.remove('hidden');
+        okBtn.focus();
       });
     }
 
     function closeConfirmModal(confirmed) {
       document.getElementById('confirm-modal').classList.add('hidden');
+      restoreModalFocus();
       if (pendingConfirmResolver) {
         const resolve = pendingConfirmResolver;
         pendingConfirmResolver = null;
@@ -1282,20 +1345,20 @@
     }
 
     function openDataModal() {
+      lastModalTrigger = document.getElementById('openDataModalBtn') || document.activeElement;
       document.getElementById('data-modal').classList.remove('hidden');
     }
 
     function closeDataModal() {
       document.getElementById('data-modal').classList.add('hidden');
+      document.getElementById('drop-zone')?.classList.remove('dragover');
+      restoreModalFocus();
     }
 
     function handleBackdropClick(event, modalId) {
       if (event.target.id === modalId) {
-        if (modalId === 'confirm-modal') {
-          closeConfirmModal(false);
-        } else if (modalId === 'data-modal') {
-          closeDataModal();
-        }
+        if (modalId === 'confirm-modal') closeConfirmModal(false);
+        else if (modalId === 'data-modal') closeDataModal();
       }
     }
 
@@ -1320,10 +1383,6 @@
       try {
         localStorage.setItem('dark_mode', String(next === 'dark'));
       } catch (_) {}
-      const iconEl = document.getElementById('dark-mode-icon');
-      if (iconEl) {
-        iconEl.textContent = next === 'dark' ? '☀️ Light' : '🌙 Dark';
-      }
     }
 
     function initDarkMode() {
@@ -1339,7 +1398,7 @@
     function toggleDarkMode() {
       const current = document.documentElement.getAttribute('data-theme');
       applyTheme(current === 'dark' ? 'light' : 'dark');
-      renderCharts();
+      renderCharts({ recreate: true });
     }
 
     function getLocalDateString(d = new Date()) {
@@ -1385,6 +1444,41 @@
       }
     }
 
+    function dayHasHabits(dayData) {
+      if (!dayData) return false;
+      return Boolean(
+        (dayData.steps && String(dayData.steps).trim() !== '') ||
+        (dayData.fluidMl && String(dayData.fluidMl).trim() !== '') ||
+        (dayData.remarks && String(dayData.remarks).trim() !== '')
+      );
+    }
+
+    function cleanupEmptyDay(db, dateStr) {
+      const dayData = db[dateStr];
+      if (!dayData) return;
+      const poops = dayData.poops || [];
+      if (!dayHasHabits(dayData) && poops.length === 0) {
+        delete db[dateStr];
+      }
+    }
+
+    function upsertPoopEntry(db, dateStr, entry) {
+      if (!db[dateStr]) {
+        db[dateStr] = { steps: '', fluidMl: '', remarks: '', poops: [] };
+      }
+      if (!Array.isArray(db[dateStr].poops)) {
+        db[dateStr].poops = [];
+      }
+      db[dateStr].poops.push(entry);
+      db[dateStr].poops.sort((a, b) => String(a.time || '').localeCompare(String(b.time || '')));
+    }
+
+    function refreshAllViews(db = getDatabase()) {
+      updateSummaryCards(db);
+      renderHistoryList(db);
+      renderCharts(db);
+    }
+
     function updatePainDisplay(val) {
       const labels = ['0 - None', '1 - Mild', '2 - Moderate', '3 - Uncomfortable', '4 - Painful', '5 - Severe'];
       document.getElementById('pain-val-display').textContent = labels[val] || val;
@@ -1419,9 +1513,7 @@
 
       fluidManuallyCleared = false;
       if (size > 0 && exact >= 0) {
-        const rawBottles = exact / size;
-        const halfSteps = Math.round(rawBottles * 2) / 2;
-        document.getElementById('bottle-count').value = halfSteps;
+        document.getElementById('bottle-count').value = Math.round((exact / size) * 2) / 2;
       }
     }
 
@@ -1429,51 +1521,44 @@
       const countInput = document.getElementById('bottle-count');
       let current = parseFloat(countInput.value);
       if (isNaN(current) || current < 0) current = 0;
-      current += amount;
-      if (current < 0) current = 0;
-      countInput.value = current;
+      countInput.value = Math.max(0, current + amount);
       fluidManuallyCleared = false;
       calculateTotalFluid();
     }
 
-    function populateFormInputsForDate(dateStr) {
-      const db = getDatabase();
+    function populateFormInputsForDate(dateStr, db = getDatabase()) {
       fluidManuallyCleared = false;
-      if (db[dateStr]) {
-        document.getElementById('daily-steps').value = db[dateStr].steps || '';
-        document.getElementById('exact-fluid').value = db[dateStr].fluidMl || '';
-        document.getElementById('daily-remarks').value = db[dateStr].remarks || '';
-      } else {
-        document.getElementById('daily-steps').value = '';
-        document.getElementById('exact-fluid').value = '';
-        document.getElementById('daily-remarks').value = '';
-      }
+      const day = db[dateStr];
+      document.getElementById('daily-steps').value = day?.steps || '';
+      document.getElementById('exact-fluid').value = day?.fluidMl || '';
+      document.getElementById('daily-remarks').value = day?.remarks || '';
       syncBottlesFromExactFluid();
-      updateSummaryCards();
+      updateSummaryCards(db);
     }
 
     function onDateSelectorChange() {
       const targetDate = document.getElementById('target-date').value;
-      populateFormInputsForDate(targetDate);
+      const db = getDatabase();
+      populateFormInputsForDate(targetDate, db);
       if (!editingPoopRef) {
         poopDateInput.value = targetDate;
       }
-      renderHistoryList();
+      renderHistoryList(db);
     }
 
     function jumpToToday() {
       const todayStr = getLocalDateString();
+      const db = getDatabase();
       dateInput.value = todayStr;
       if (!editingPoopRef) {
         poopDateInput.value = todayStr;
       }
-      populateFormInputsForDate(todayStr);
-      renderHistoryList();
+      populateFormInputsForDate(todayStr, db);
+      renderHistoryList(db);
       showToast(`Jumped to ${todayStr}`, 'info');
     }
 
-    function updateSummaryCards() {
-      const db = getDatabase();
+    function updateSummaryCards(db = getDatabase()) {
       const activeDate = dateInput.value || getLocalDateString();
       const liveSteps = parseFloat(document.getElementById('daily-steps').value);
       const liveFluid = parseFloat(document.getElementById('exact-fluid').value);
@@ -1481,10 +1566,8 @@
       const steps = !isNaN(liveSteps) && liveSteps >= 0 ? liveSteps : Math.max(0, parseFloat(db[activeDate]?.steps) || 0);
       const fluid = !isNaN(liveFluid) && liveFluid >= 0 ? liveFluid : Math.max(0, parseFloat(db[activeDate]?.fluidMl) || 0);
 
-      const waterGoal = 2000;
-      const stepsGoal = 10000;
-      const waterPct = Math.round((fluid / waterGoal) * 100);
-      const stepsPct = Math.round((steps / stepsGoal) * 100);
+      const waterPct = Math.round((fluid / 2000) * 100);
+      const stepsPct = Math.round((steps / 10000) * 100);
 
       document.getElementById('summary-date-water').textContent = activeDate.slice(5);
       document.getElementById('summary-water-val').textContent = `${fluid.toLocaleString()} / 2,000 mL`;
@@ -1542,15 +1625,12 @@
       document.getElementById('exact-fluid').value = cleanedFluid;
 
       if (!db[targetDate]) db[targetDate] = { steps: '', fluidMl: '', remarks: '', poops: [] };
-
       db[targetDate].steps = cleanedSteps;
       db[targetDate].fluidMl = cleanedFluid;
       db[targetDate].remarks = document.getElementById('daily-remarks').value;
 
       if (saveDatabase(db)) {
-        updateSummaryCards();
-        renderHistoryList();
-        renderCharts();
+        refreshAllViews(db);
         showToast(`Habits saved for ${targetDate}`, 'success');
       }
     }
@@ -1575,15 +1655,12 @@
       db[targetDate].steps = '';
       db[targetDate].fluidMl = '';
       db[targetDate].remarks = '';
-
-      if (!db[targetDate].poops || db[targetDate].poops.length === 0) {
-        delete db[targetDate];
-      }
+      cleanupEmptyDay(db, targetDate);
 
       if (saveDatabase(db)) {
-        populateFormInputsForDate(targetDate);
-        renderHistoryList();
-        renderCharts();
+        populateFormInputsForDate(targetDate, db);
+        renderHistoryList(db);
+        renderCharts(db);
         showToast(`Habits cleared for ${targetDate}`, 'info');
       }
     }
@@ -1608,7 +1685,7 @@
       document.getElementById('poop-cancel-edit-btn').classList.remove('hidden');
 
       collapsedStates[dateStr] = false;
-      renderHistoryList();
+      renderHistoryList(db);
       document.getElementById('poop-form').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
@@ -1627,7 +1704,7 @@
 
     async function deletePoopEntry(dateStr, index) {
       const db = getDatabase();
-      if (!db[dateStr] || !db[dateStr].poops || !db[dateStr].poops[index]) return;
+      if (!db[dateStr]?.poops?.[index]) return;
 
       const confirmed = await requestConfirmation({
         title: 'Delete Bowel Movement',
@@ -1643,16 +1720,10 @@
         cancelEditPoop();
       }
 
-      const dayData = db[dateStr];
-      const hasHabits = (dayData.steps && dayData.steps !== '') || (dayData.fluidMl && dayData.fluidMl !== '') || (dayData.remarks && dayData.remarks !== '');
-      if (!hasHabits && dayData.poops.length === 0) {
-        delete db[dateStr];
-      }
+      cleanupEmptyDay(db, dateStr);
 
       if (saveDatabase(db)) {
-        updateSummaryCards();
-        renderHistoryList();
-        renderCharts();
+        refreshAllViews(db);
         showToast('Bowel movement entry deleted', 'info');
       }
     }
@@ -1677,44 +1748,32 @@
 
       if (editingPoopRef) {
         const { date: origDate, index: origIndex } = editingPoopRef;
-        if (db[origDate] && db[origDate].poops && db[origDate].poops[origIndex]) {
+        if (db[origDate]?.poops?.[origIndex]) {
           if (origDate === poopDate) {
             db[origDate].poops[origIndex] = poopEntry;
-            db[origDate].poops.sort((a, b) => a.time.localeCompare(b.time));
+            db[origDate].poops.sort((a, b) => String(a.time || '').localeCompare(String(b.time || '')));
           } else {
             db[origDate].poops.splice(origIndex, 1);
-            const origDay = db[origDate];
-            const origHasHabits = (origDay.steps && origDay.steps !== '') || (origDay.fluidMl && origDay.fluidMl !== '') || (origDay.remarks && origDay.remarks !== '');
-            if (!origHasHabits && origDay.poops.length === 0) {
-              delete db[origDate];
-            }
-            if (!db[poopDate]) db[poopDate] = { steps: '', fluidMl: '', remarks: '', poops: [] };
-            db[poopDate].poops.push(poopEntry);
-            db[poopDate].poops.sort((a, b) => a.time.localeCompare(b.time));
+            cleanupEmptyDay(db, origDate);
+            upsertPoopEntry(db, poopDate, poopEntry);
           }
         }
         if (saveDatabase(db)) {
           cancelEditPoop();
-          updateSummaryCards();
-          renderHistoryList();
-          renderCharts();
+          refreshAllViews(db);
           showToast(`Updated bowel movement for ${poopDate} at ${customTime}`, 'success');
         }
         return;
       }
 
-      if (!db[poopDate]) db[poopDate] = { steps: '', fluidMl: '', remarks: '', poops: [] };
-      db[poopDate].poops.push(poopEntry);
-      db[poopDate].poops.sort((a, b) => a.time.localeCompare(b.time));
+      upsertPoopEntry(db, poopDate, poopEntry);
 
       if (saveDatabase(db)) {
         document.getElementById('poop-remark').value = '';
         document.getElementById('poop-time').value = getCurrentTimeString();
         document.getElementById('pain-slider').value = 0;
         updatePainDisplay(0);
-        updateSummaryCards();
-        renderHistoryList();
-        renderCharts();
+        refreshAllViews(db);
         showToast(`Logged bowel movement for ${poopDate} at ${customTime}`, 'success');
       }
     });
@@ -1725,6 +1784,7 @@
     }
 
     function clearHistoryFilter() {
+      clearTimeout(historyFilterTimer);
       document.getElementById('filter-date').value = '';
       document.getElementById('search-query').value = '';
       document.getElementById('filter-bristol').value = '';
@@ -1735,6 +1795,11 @@
       document.getElementById('filter-steps-min').value = '';
       document.getElementById('filter-steps-max').value = '';
       renderHistoryList();
+    }
+
+    function scheduleHistoryRender(delay = 80) {
+      clearTimeout(historyFilterTimer);
+      historyFilterTimer = setTimeout(() => renderHistoryList(), delay);
     }
 
     function poopMatchesSearch(poop, query) {
@@ -1756,15 +1821,9 @@
     }
 
     function poopMatchesSymptomFilters(poop, { bristolFilter, minPainFilter, bleedingOnly }) {
-      if (bristolFilter && String(poop.bristol) !== bristolFilter) {
-        return false;
-      }
-      if (minPainFilter !== null && (parseFloat(poop.pain || 0) < minPainFilter)) {
-        return false;
-      }
-      if (bleedingOnly && (parseInt(poop.bleeding || 0, 10) <= 0)) {
-        return false;
-      }
+      if (bristolFilter && String(poop.bristol) !== bristolFilter) return false;
+      if (minPainFilter !== null && (parseFloat(poop.pain || 0) < minPainFilter)) return false;
+      if (bleedingOnly && (parseInt(poop.bleeding || 0, 10) <= 0)) return false;
       return true;
     }
 
@@ -1772,8 +1831,7 @@
       return Boolean(bristolFilter) || minPainFilter !== null || bleedingOnly;
     }
 
-    function renderHistoryList() {
-      const db = getDatabase();
+    function renderHistoryList(db = getDatabase()) {
       const container = document.getElementById('log-container');
       const targetDate = document.getElementById('target-date').value;
       const searchQuery = (document.getElementById('search-query').value || '').trim().toLowerCase();
@@ -1792,8 +1850,6 @@
       const stepsMaxRaw = document.getElementById('filter-steps-max').value;
       const stepsMin = stepsMinRaw !== '' ? parseFloat(stepsMinRaw) : null;
       const stepsMax = stepsMaxRaw !== '' ? parseFloat(stepsMaxRaw) : null;
-
-      container.innerHTML = '';
 
       let dates = Object.keys(db).sort().reverse();
       if (filterDate) {
@@ -1816,6 +1872,7 @@
         stepsMax !== null
       );
 
+      const fragment = document.createDocumentFragment();
       let renderedCount = 0;
 
       dates.forEach(date => {
@@ -1827,15 +1884,13 @@
 
         if (stepsMin !== null && daySteps < stepsMin) return;
         if (stepsMax !== null && daySteps > stepsMax) return;
-
         if (fluidMin !== null && dayFluid < fluidMin) return;
         if (fluidMax !== null && dayFluid > fluidMax) return;
 
-        const matchingPoops = allPoops.filter(p => {
-          const passesSymptom = poopMatchesSymptomFilters(p, { bristolFilter, minPainFilter, bleedingOnly });
-          const passesSearch = poopMatchesSearch(p, searchQuery);
-          return passesSymptom && passesSearch;
-        });
+        const matchingPoops = allPoops.filter(p =>
+          poopMatchesSymptomFilters(p, { bristolFilter, minPainFilter, bleedingOnly }) &&
+          poopMatchesSearch(p, searchQuery)
+        );
 
         const dailyTextMatches = !searchQuery || dailyRemark.includes(searchQuery) || date.includes(searchQuery);
 
@@ -1855,8 +1910,8 @@
           ? false
           : (collapsedStates[date] !== undefined ? collapsedStates[date] : true);
 
-        const card = document.createElement('div');
-        card.className = `history-card ${date === targetDate ? 'selected' : ''}`;
+        const safeDate = escapeHtml(date);
+        const safeDateJs = date.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
         let poopsHtml = '';
         if (!isCollapsed) {
@@ -1869,12 +1924,12 @@
               poopsHtml += `
                 <div class="poop-item ${isEditingThis ? 'editing' : ''}">
                   <div class="poop-item-main">
-                    <div><strong>#${displayIdx + 1}</strong> (${p.time}) — Type ${p.bristol} | Pain: ${p.pain}/5 | Bleed: ${p.bleeding}</div>
-                    ${p.remark ? `<div class="poop-remark">Remark: ${p.remark}</div>` : ''}
+                    <div><strong>#${displayIdx + 1}</strong> (${escapeHtml(p.time)}) — Type ${escapeHtml(p.bristol)} | Pain: ${escapeHtml(p.pain)}/5 | Bleed: ${escapeHtml(p.bleeding)}</div>
+                    ${p.remark ? `<div class="poop-remark">Remark: ${escapeHtml(p.remark)}</div>` : ''}
                   </div>
                   <div class="poop-item-actions">
-                    <button type="button" class="sm" onclick="startEditPoop('${date}', ${origIdx})" title="Edit this entry">Edit</button>
-                    <button type="button" class="sm danger-ghost" onclick="deletePoopEntry('${date}', ${origIdx})" title="Delete this entry">×</button>
+                    <button type="button" class="sm" onclick="startEditPoop('${safeDateJs}', ${origIdx})" title="Edit this entry">Edit</button>
+                    <button type="button" class="sm danger-ghost" onclick="deletePoopEntry('${safeDateJs}', ${origIdx})" title="Delete this entry">×</button>
                   </div>
                 </div>
               `;
@@ -1886,23 +1941,27 @@
         }
 
         const remarksHtml = (!isCollapsed && dayData.remarks)
-          ? `<div class="daily-note-box">Daily Note: ${dayData.remarks}</div>`
+          ? `<div class="daily-note-box">Daily Note: ${escapeHtml(dayData.remarks)}</div>`
           : '';
 
+        const card = document.createElement('div');
+        card.className = `history-card ${date === targetDate ? 'selected' : ''}`;
         card.innerHTML = `
           <div class="history-top">
-            <div class="history-trigger" onclick="toggleCardCollapse('${date}')">
-              <span class="history-date">${date} ${date === targetDate ? '(Selected)' : ''}</span>
+            <div class="history-trigger" onclick="toggleCardCollapse('${safeDateJs}')">
+              <span class="history-date">${safeDate} ${date === targetDate ? '(Selected)' : ''}</span>
               <span class="history-toggle-hint">(${isCollapsed ? '▼ Expand' : '▲ Collapse'})</span>
               <div class="history-metrics">🚶‍♂️ ${daySteps} steps | 💧 ${dayFluid} mL | 💩 ${poopsToDisplay.length} logs</div>
             </div>
-            <button type="button" class="sm" onclick="selectDate('${date}')">Select</button>
+            <button type="button" class="sm" onclick="selectDate('${safeDateJs}')">Select</button>
           </div>
           ${remarksHtml}
           ${poopsHtml}
         `;
-        container.appendChild(card);
+        fragment.appendChild(card);
       });
+
+      container.replaceChildren(fragment);
 
       if (renderedCount === 0) {
         container.innerHTML = '<p class="empty-msg">No logs match your search or filters.</p>';
@@ -1910,12 +1969,13 @@
     }
 
     function selectDate(dateStr) {
+      const db = getDatabase();
       document.getElementById('target-date').value = dateStr;
       if (!editingPoopRef) {
         document.getElementById('poop-date').value = dateStr;
       }
-      populateFormInputsForDate(dateStr);
-      renderHistoryList();
+      populateFormInputsForDate(dateStr, db);
+      renderHistoryList(db);
     }
 
     function handleDragOver(e) {
@@ -1935,7 +1995,7 @@
       e.stopPropagation();
       document.getElementById('drop-zone').classList.remove('dragover');
 
-      const files = e.dataTransfer.files;
+      const files = e.dataTransfer?.files;
       if (files && files.length > 0) {
         const file = files[0];
         if (file.name.endsWith('.json')) {
@@ -1962,9 +2022,8 @@
 
             if (saveDatabase(importedDb)) {
               cancelEditPoop();
-              populateFormInputsForDate(document.getElementById('target-date').value);
-              renderHistoryList();
-              renderCharts();
+              populateFormInputsForDate(document.getElementById('target-date').value, importedDb);
+              refreshAllViews(importedDb);
               closeDataModal();
               showToast('Data imported successfully', 'success');
             }
@@ -1979,7 +2038,7 @@
     }
 
     function importData(event) {
-      const file = event.target.files[0];
+      const file = event.target.files?.[0];
       if (!file) return;
       processImportFile(file);
       event.target.value = '';
@@ -2018,15 +2077,13 @@
     };
     Chart.register(targetLinePlugin);
 
-    function renderCharts() {
-      const db = getDatabase();
+    function renderCharts(db = getDatabase(), { recreate = false } = {}) {
       const rangeVal = document.getElementById('chart-range').value;
 
       const activeDates = Object.keys(db).filter(d => {
         const data = db[d];
-        const hasHabits = (data.steps && parseFloat(data.steps) > 0) || (data.fluidMl && parseFloat(data.fluidMl) > 0) || (data.remarks && data.remarks.trim() !== '');
-        const hasPoops = data.poops && data.poops.length > 0;
-        return hasHabits || hasPoops;
+        const hasPoops = Array.isArray(data.poops) && data.poops.length > 0;
+        return dayHasHabits(data) || hasPoops;
       }).sort();
 
       let sortedDates = activeDates;
@@ -2034,11 +2091,9 @@
         const limitDays = parseInt(rangeVal, 10);
         const latestDateStr = activeDates[activeDates.length - 1];
         const anchorDate = new Date(latestDateStr + 'T00:00:00');
-
         const cutoffDate = new Date(anchorDate);
         cutoffDate.setDate(anchorDate.getDate() - (limitDays - 1));
         const cutoffStr = cutoffDate.toISOString().split('T')[0];
-
         sortedDates = activeDates.filter(d => d >= cutoffStr);
       }
 
@@ -2048,98 +2103,113 @@
       const gridColor = getCssVar('--border', '#dfe4f0');
       const defaultTextColor = getCssVar('--text-muted', '#5b647a');
       const accentColor = getCssVar('--accent', '#4f46e5');
+      const accentSoft = getCssVar('--accent-soft', 'rgba(79, 70, 229, 0.12)');
       const successColor = getCssVar('--success', '#059669');
       const dangerColor = getCssVar('--danger', '#dc2626');
       const bristolLineColor = '#8b5cf6';
 
       const logCountPerDate = sortedDates.map(d => (db[d].poops || []).length);
-      const hasBleedingPerDate = sortedDates.map(d => {
-        const poops = db[d].poops || [];
-        return poops.some(p => parseInt(p.bleeding || 0, 10) > 0);
-      });
+      const hasBleedingPerDate = sortedDates.map(d =>
+        (db[d].poops || []).some(p => parseInt(p.bleeding || 0, 10) > 0)
+      );
 
       const stepsData = hasData ? sortedDates.map(d => Math.max(0, parseFloat(db[d].steps) || 0)) : [null];
       const waterData = hasData ? sortedDates.map(d => Math.max(0, parseFloat(db[d].fluidMl) || 0)) : [null];
 
-      if (habitsChartInstance) habitsChartInstance.destroy();
-      const ctx1 = document.getElementById('habitsChart').getContext('2d');
-      habitsChartInstance = new Chart(ctx1, {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [
-            {
-              label: 'Water (mL)',
-              data: waterData,
-              borderColor: accentColor,
-              backgroundColor: getCssVar('--accent-soft', 'rgba(79, 70, 229, 0.12)'),
-              pointRadius: 3,
-              pointHoverRadius: 5,
-              yAxisID: 'y',
-              tension: 0.2,
-              fill: true
-            },
-            {
-              label: 'Steps',
-              data: stepsData,
-              borderColor: successColor,
-              backgroundColor: 'transparent',
-              pointRadius: 3,
-              pointHoverRadius: 5,
-              yAxisID: 'y1',
-              tension: 0.2
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            x: {
-              grid: { color: gridColor },
-              ticks: { color: defaultTextColor, font: { size: 10 } }
-            },
-            y: {
-              type: 'linear',
-              display: true,
-              position: 'left',
-              suggestedMin: 0,
-              suggestedMax: 3000,
-              grid: { color: gridColor },
-              ticks: { color: defaultTextColor, font: { size: 10 } },
-              title: { display: true, text: 'Water (mL)', color: defaultTextColor, font: { size: 10 } }
-            },
-            y1: {
-              type: 'linear',
-              display: true,
-              position: 'right',
-              suggestedMin: 0,
-              suggestedMax: 12000,
-              grid: { drawOnChartArea: false },
-              ticks: { color: defaultTextColor, font: { size: 10 } },
-              title: { display: true, text: 'Steps', color: defaultTextColor, font: { size: 10 } }
-            }
+      if (recreate && habitsChartInstance) {
+        habitsChartInstance.destroy();
+        habitsChartInstance = null;
+      }
+
+      if (habitsChartInstance) {
+        habitsChartInstance.data.labels = labels;
+        habitsChartInstance.data.datasets[0].data = waterData;
+        habitsChartInstance.data.datasets[1].data = stepsData;
+        habitsChartInstance.options.plugins.targetLinePlugin.lines = hasData ? [
+          { value: 2000, scale: 'y', color: accentColor, label: 'Water Target: 2000mL' },
+          { value: 10000, scale: 'y1', color: successColor, label: 'Steps Target: 10,000' }
+        ] : [];
+        habitsChartInstance.update();
+      } else {
+        const ctx1 = document.getElementById('habitsChart').getContext('2d');
+        habitsChartInstance = new Chart(ctx1, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [
+              {
+                label: 'Water (mL)',
+                data: waterData,
+                borderColor: accentColor,
+                backgroundColor: accentSoft,
+                pointRadius: 3,
+                pointHoverRadius: 5,
+                yAxisID: 'y',
+                tension: 0.2,
+                fill: true
+              },
+              {
+                label: 'Steps',
+                data: stepsData,
+                borderColor: successColor,
+                backgroundColor: 'transparent',
+                pointRadius: 3,
+                pointHoverRadius: 5,
+                yAxisID: 'y1',
+                tension: 0.2
+              }
+            ]
           },
-          plugins: {
-            legend: {
-              labels: {
-                color: defaultTextColor,
-                font: { size: 11 },
-                usePointStyle: true,
-                pointStyle: 'line',
-                boxWidth: 26,
-                borderWidth: 3
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                grid: { color: gridColor },
+                ticks: { color: defaultTextColor, font: { size: 10 } }
+              },
+              y: {
+                type: 'linear',
+                display: true,
+                position: 'left',
+                suggestedMin: 0,
+                suggestedMax: 3000,
+                grid: { color: gridColor },
+                ticks: { color: defaultTextColor, font: { size: 10 } },
+                title: { display: true, text: 'Water (mL)', color: defaultTextColor, font: { size: 10 } }
+              },
+              y1: {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                suggestedMin: 0,
+                suggestedMax: 12000,
+                grid: { drawOnChartArea: false },
+                ticks: { color: defaultTextColor, font: { size: 10 } },
+                title: { display: true, text: 'Steps', color: defaultTextColor, font: { size: 10 } }
               }
             },
-            targetLinePlugin: {
-              lines: hasData ? [
-                { value: 2000, scale: 'y', color: accentColor, label: 'Water Target: 2000mL' },
-                { value: 10000, scale: 'y1', color: successColor, label: 'Steps Target: 10,000' }
-              ] : []
+            plugins: {
+              legend: {
+                labels: {
+                  color: defaultTextColor,
+                  font: { size: 11 },
+                  usePointStyle: true,
+                  pointStyle: 'line',
+                  boxWidth: 26,
+                  borderWidth: 3
+                }
+              },
+              targetLinePlugin: {
+                lines: hasData ? [
+                  { value: 2000, scale: 'y', color: accentColor, label: 'Water Target: 2000mL' },
+                  { value: 10000, scale: 'y1', color: successColor, label: 'Steps Target: 10,000' }
+                ] : []
+              }
             }
           }
-        }
-      });
+        });
+      }
 
       const hardnessData = hasData ? sortedDates.map(d => {
         const poops = db[d].poops || [];
@@ -2155,102 +2225,127 @@
         return Number((sum / poops.length).toFixed(1));
       }) : [null];
 
-      if (symptomsChartInstance) symptomsChartInstance.destroy();
-      const ctx2 = document.getElementById('symptomsChart').getContext('2d');
-      symptomsChartInstance = new Chart(ctx2, {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [
-            {
-              label: 'Hardness (1-7)',
-              data: hardnessData,
-              borderColor: bristolLineColor,
-              backgroundColor: 'transparent',
-              pointRadius: 3,
-              pointHoverRadius: 5,
-              yAxisID: 'y',
-              tension: 0.2,
-              spanGaps: true
-            },
-            {
-              label: 'Pain (0-5)',
-              data: painData,
-              borderColor: dangerColor,
-              backgroundColor: 'transparent',
-              pointRadius: 3,
-              pointHoverRadius: 5,
-              yAxisID: 'y1',
-              tension: 0.2,
-              spanGaps: true
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            x: {
-              grid: { color: gridColor },
-              ticks: {
-                font: { size: 10 },
-                color: function(context) {
-                  const index = context.index;
-                  return hasBleedingPerDate[index] ? dangerColor : defaultTextColor;
-                }
+      if (recreate && symptomsChartInstance) {
+        symptomsChartInstance.destroy();
+        symptomsChartInstance = null;
+      }
+
+      if (symptomsChartInstance) {
+        symptomsChartInstance.data.labels = labels;
+        symptomsChartInstance.data.datasets[0].data = hardnessData;
+        symptomsChartInstance.data.datasets[1].data = painData;
+        symptomsChartInstance.options.scales.x.ticks.color = function(context) {
+          return hasBleedingPerDate[context.index] ? dangerColor : defaultTextColor;
+        };
+        symptomsChartInstance.options.plugins.tooltip.callbacks.afterBody = function(items) {
+          if (!hasData || !items.length) return [];
+          const idx = items[0].dataIndex;
+          return [
+            `Logs that day: ${logCountPerDate[idx] || 0}`,
+            `Bleeding recorded: ${hasBleedingPerDate[idx] ? 'Yes' : 'No'}`
+          ];
+        };
+        symptomsChartInstance.options.plugins.targetLinePlugin.lines = hasData ? [
+          { value: 4, scale: 'y', color: bristolLineColor, label: 'Ideal Stool (Type 4)' }
+        ] : [];
+        symptomsChartInstance.update();
+      } else {
+        const ctx2 = document.getElementById('symptomsChart').getContext('2d');
+        symptomsChartInstance = new Chart(ctx2, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [
+              {
+                label: 'Hardness (1-7)',
+                data: hardnessData,
+                borderColor: bristolLineColor,
+                backgroundColor: 'transparent',
+                pointRadius: 3,
+                pointHoverRadius: 5,
+                yAxisID: 'y',
+                tension: 0.2,
+                spanGaps: true
+              },
+              {
+                label: 'Pain (0-5)',
+                data: painData,
+                borderColor: dangerColor,
+                backgroundColor: 'transparent',
+                pointRadius: 3,
+                pointHoverRadius: 5,
+                yAxisID: 'y1',
+                tension: 0.2,
+                spanGaps: true
               }
-            },
-            y: {
-              type: 'linear',
-              display: true,
-              position: 'left',
-              min: 1,
-              max: 7,
-              grid: { color: gridColor },
-              ticks: { color: defaultTextColor, font: { size: 10 }, stepSize: 1 },
-              title: { display: true, text: 'Hardness', color: defaultTextColor, font: { size: 10 } }
-            },
-            y1: {
-              type: 'linear',
-              display: true,
-              position: 'right',
-              min: 0,
-              max: 5,
-              grid: { drawOnChartArea: false },
-              ticks: { color: defaultTextColor, font: { size: 10 }, stepSize: 1 },
-              title: { display: true, text: 'Pain (0-5)', color: defaultTextColor, font: { size: 10 } }
-            }
+            ]
           },
-          plugins: {
-            legend: {
-              labels: {
-                color: defaultTextColor,
-                font: { size: 11 },
-                usePointStyle: true,
-                pointStyle: 'line',
-                boxWidth: 26,
-                borderWidth: 3
-              }
-            },
-            tooltip: {
-              callbacks: {
-                afterBody(items) {
-                  if (!hasData || !items.length) return [];
-                  const idx = items[0].dataIndex;
-                  const logsCount = logCountPerDate[idx] || 0;
-                  const bleedStatus = hasBleedingPerDate[idx] ? 'Yes' : 'No';
-                  return [`Logs that day: ${logsCount}`, `Bleeding recorded: ${bleedStatus}`];
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                grid: { color: gridColor },
+                ticks: {
+                  font: { size: 10 },
+                  color: function(context) {
+                    return hasBleedingPerDate[context.index] ? dangerColor : defaultTextColor;
+                  }
                 }
+              },
+              y: {
+                type: 'linear',
+                display: true,
+                position: 'left',
+                min: 1,
+                max: 7,
+                grid: { color: gridColor },
+                ticks: { color: defaultTextColor, font: { size: 10 }, stepSize: 1 },
+                title: { display: true, text: 'Hardness', color: defaultTextColor, font: { size: 10 } }
+              },
+              y1: {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                min: 0,
+                max: 5,
+                grid: { drawOnChartArea: false },
+                ticks: { color: defaultTextColor, font: { size: 10 }, stepSize: 1 },
+                title: { display: true, text: 'Pain (0-5)', color: defaultTextColor, font: { size: 10 } }
               }
             },
-            targetLinePlugin: {
-              lines: hasData ? [
-                { value: 4, scale: 'y', color: bristolLineColor, label: 'Ideal Stool (Type 4)' }
-              ] : []
+            plugins: {
+              legend: {
+                labels: {
+                  color: defaultTextColor,
+                  font: { size: 11 },
+                  usePointStyle: true,
+                  pointStyle: 'line',
+                  boxWidth: 26,
+                  borderWidth: 3
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  afterBody(items) {
+                    if (!hasData || !items.length) return [];
+                    const idx = items[0].dataIndex;
+                    return [
+                      `Logs that day: ${logCountPerDate[idx] || 0}`,
+                      `Bleeding recorded: ${hasBleedingPerDate[idx] ? 'Yes' : 'No'}`
+                    ];
+                  }
+                }
+              },
+              targetLinePlugin: {
+                lines: hasData ? [
+                  { value: 4, scale: 'y', color: bristolLineColor, label: 'Ideal Stool (Type 4)' }
+                ] : []
+              }
             }
           }
-        }
-      });
+        });
+      }
     }
 
     function exportJSON() {
@@ -2266,9 +2361,9 @@
     }
 
     initDarkMode();
-    populateFormInputsForDate(dateInput.value);
-    renderHistoryList();
-    renderCharts();
+    const initialDb = getDatabase();
+    populateFormInputsForDate(dateInput.value, initialDb);
+    refreshAllViews(initialDb);
   </script>
 </body>
 </html>
